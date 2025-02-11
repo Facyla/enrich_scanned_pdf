@@ -1,12 +1,31 @@
 <?php
-$debug = false; // @debug enable only for debug
+/**
+ * Roadmap : un webservice modulaire pour améliorer l'accessibilité de document PDF "Image"
+ * 
+ * Structure : 
+ * _scripts : scripts bash, pouvant être appelés avec des paramètres ou sans, et répondant à un besoin précis, ie. extraire le texte, analyser une image, etc.
+ * _data : tous les fichiers : source, artefacts intermédiaires, sorties
+ * 
+ */
+
+// Fonctions/classes utilisées 
+require_once('functions.php');
+
+$debug = true; // @debug enable only for debug
 
 // Définir le chemin absolu du script Bash à exécuter
 $baseDir = dirname(__FILE__) . '/'; // Répertoire parent de celui où se trouve ce script PHP
 $bashScript = $baseDir . '_scripts/Enrich_PDF.sh'; // Chemin absolu du script Bash
 
+$path_scripts = $baseDir . '_scripts/';
+$path_source = $baseDir . '_data/source/';
+$path_temp = $baseDir . '_data/temp/';
+$path_output = $baseDir . '_data/output/';
+
 
 // Envoi du fichier généré si demandé (seulement depuis le dossier défini)
+$served_file = enrichpdf_serve_file_if_request($baseDir);
+/*
 if (isset($_REQUEST['serve_file'])) {
 	$serve_file = strip_tags(base64_decode(urldecode($_REQUEST['serve_file'])));
 	$allowed_path = $baseDir . '_data/source/';
@@ -25,10 +44,11 @@ if (isset($_REQUEST['serve_file'])) {
 		}
 	}
 }
+*/
 
 
 
-// Récupération des paramètres
+// # Récupération des paramètres du formulaire
 $action = false;
 if (isset($_REQUEST['action']) && !empty($_REQUEST['action'])) {
 	$action = strip_tags($_REQUEST['action']);
@@ -112,6 +132,8 @@ $html .= '<html lang="fr">
 <body>';
 $html .= '<h2>Reconnaissance de caractères et enrichissement de documents PDF scannés pour les rendre accessibles et indexables</h2>';
 
+
+// # Formulaire HTML
 $html .= '<h3>' . "Reconnaissance de caractères et enrichissement d'un PDF scanné" . '</h3>';
 
 //$html .= '<form id="enrich-pdf" method="GET">';
@@ -122,7 +144,7 @@ $html .= '<input type="hidden" name="action" value="process" />
 
 //$html .= '<div><label>Nom du fichier source <input type="text" name="input" placeholder="Nom_du_scan_PDF.pdf" value="' . $inputFile . '" /></label><br /><em>Si le fichier existe déjà dans le répertoire, indiquer son  (démo, envoi précédent)</em></div>
 
-$html .= '<div><label>Langue pour l\'OCR <select type="text" name="ocr_lang" id="ocr_lang">
+$html .= '<div><label>OCR : choix de la langue <select type="text" name="ocr_lang" id="ocr_lang">
 		<option value="fra" selected="selected">French</option>
 		<option value="eng">English</option>
 		<option value="rus">Russian</option>
@@ -256,7 +278,29 @@ $html .= '
 $html .= '
   </select></label></div>';
 
-/*
+
+$html .= '<fieldset><legend>Traitements à effectuer</legend>';	
+$html .= '<div><label>Extraction du texte <select type="text" name="module_ocr" id="module_ocr">
+	<option value="yes" selected="selected">Oui</option>
+	<option value="no">Non</option>
+	</select>';
+
+	$html .= '<div><label>' . "Extraction données d'un tableau " . '<select type="text" name="module_table" id="module_table">
+	<option value="yes" selected="selected">Oui</option>
+	<option value="no">Non</option>
+	</select></label></div>';
+
+	$html .= '<div><label>' . "Description d'une image " . '<select type="text" name="module_image" id="module_image">
+	<option value="yes" selected="selected">Oui</option>
+	<option value="no">Non</option>
+	</select></label></div>';
+
+	$html .= '<div><label>' . "Analyse niveau d'accessibilité du document source " . '<select type="text" name="module_audit" id="module_audit">
+	<option value="yes" selected="selected">Oui</option>
+	<option value="no">Non</option>
+	</select></label></div>';
+
+	/*
 $html .= '<div><label>Nom du fichier enrichi <input type="text" name="output" placeholder="Page_de_garde_PDFUA.pdf" value="' . $outputFile . '"></label></div>';
 
 //$html .= '<div><label>Chemin du dossier temporaire<input type="text" name="temp_path" value="" />' . $temp_path . '</label></div>';
@@ -273,6 +317,7 @@ if ($useLLM != 'no') {
 	$html .= '<div><label>Utiliser un LLM pour corriger le texte océrisé <input type="checkbox" name="use_llm" id="use_llm" value="yes" /></label></div>';
 }
 */
+$html .= '</fieldset>';	
 
 $html .= '<div class="clear-flex"></div>';
 $html .= '<p><button type="submit">Envoyer</button></p>';
@@ -359,242 +404,4 @@ if ($action) {
 $html .= '</body></html>';
 
 echo $html;
-
-
-
-/* 
- * string $command : system command to execute
- * string $inputFile : input file path
- * string $outputFile : output file path
- * string $baseDir : valid base directory from which serving files is allowed
- * string $OCRLanguage : language code used by Tesseract for OCR
- * string $addSummary : add a summary
- * string $useLLM : use a LLM
- */
-function enrichpdf_process($command = '', $inputFile = '', $outputFile = '', $baseDir = '', $OCRLanguage = 'fra', $addSummary = true, $useLLM = true, $debug = false) {
-	if (empty($command)) { return false; }
-	if (empty($inputFile)) { return false; }
-	
-	if ($debug) { echo "DEBUG : $command<br />"; }
-	
-	$status = false; // Return status (true|false)
-	$return = ''; // Return message
-	$enriched_pdf_path = '';
-	
-	// Descripteurs pour les flux
-	$descriptors = [
-		0 => ["pipe", "r"], // stdin
-		1 => ["pipe", "w"], // stdout
-		2 => ["pipe", "w"], // stderr
-	];
-
-
-	$process = proc_open($command, $descriptors, $pipes);
-	if (is_resource($process)) {
-		if ($debug) { echo "DEBUG : ressource OK<br />"; }
-		// Lire la sortie et les erreurs
-		fclose($pipes[0]); // Close stdin
-		$output = stream_get_contents($pipes[1]); // Capture stdout
-		fclose($pipes[1]);
-		$errorOutput = stream_get_contents($pipes[2]); // Capture stderr
-		fclose($pipes[2]);
-		// Fermeture du processus
-		$returnCode = proc_close($process);
-		
-		if ($debug) {
-			$return .= "Valeur de retour : <code>$returnCode</code><br />";
-			if ($returnCode === 0) {
-				$return .= "Sortie (stdout) : <pre>$output</pre>";
-				$return .= "Fichier enrichi généré : <pre>$outputFile</pre>";
-				if (file_exists($outputFile)) {
-					// Encoder uniquement le nom du fichier pour la sécurité
-					$encodedFileName = urlencode(base64_encode(basename($outputFile))); // Encode le nom du fichier pour plus de sécurité
-					$return .= '<a href="?serve_file=' . $encodedFileName . '">Télécharger le fichier</a>';
-				} else {
-					$return .= '<p style="color:red;">Le fichier n\'existe pas ou n\'est pas accessible.</p>';
-				}
-			} else {
-				$return .= "Erreur (stderr) : <code>$errorOutput</code><br />";
-				$return .= "Erreur (stdout) : <pre>$output</pre>";
-			}
-		}
-		// Lien de téléchargement
-		if ($returnCode === 0) {
-			if (file_exists($outputFile)) {
-				$status = true;
-			} else {
-				$return .= '<p style="color:red;">Le fichier n\'existe pas ou n\'est pas accessible.</p>';
-			}
-		} else {
-			$return .= '<p style="color:red;">La commande a échoué.</p>';
-		}
-	} else {
-		$return .= "Impossible d'ouvrir le processus.";
-	}
-	
-	// Return status as array
-	return [
-		'status' => $status, // true|false
-		'enriched_pdf_path' => $outputFile, // string
-		'message' => $return, // string
-	];
-}
-
-
-
-/**
- * Sert un fichier généré de manière sécurisée.
- *
- * @param string $outputFile Chemin complet du fichier à servir.
- */
-function enrichpdf_serve_generated_file($outputFile) {
-	// Vérification supplémentaire avant d'envoyer le fichier
-	if (!file_exists($outputFile)) {
-		header("HTTP/1.1 404 Not Found");
-		echo "Fichier introuvable.";
-		return;
-	}
-
-	// Définir les en-têtes pour forcer le téléchargement
-	$fileName = basename($outputFile);
-	header("Content-Type: application/octet-stream");
-	header("Content-Disposition: attachment; filename=\"" . addslashes($fileName) . "\"");
-	header("Content-Length: " . filesize($outputFile));
-
-	// Lire et envoyer le fichier
-	readfile($outputFile);
-	return;
-}
-
-
-// Get and clean the requests
-function get_input($variable, $default = '', $filter = true) {
-	if (!isset($_REQUEST[$variable])) return $default;
-	if (is_array($_REQUEST[$variable])) {
-		$result = $_REQUEST[$variable];
-	} else {
-		$result = trim($_REQUEST[$variable]);
-	}
-	if ($filter) {
-		$result = get_input_filter($result);
-	}
-	return $result;
-}
-
-// Write file to disk
-function write_file($path = "", $content = '') {
-	if ($fp = fopen($path, 'w')) {
-		fwrite($fp, $content);
-		fclose($fp);
-		return true;
-	}
-	return false;
-}
-
-function get_input_filter($input) {
-	if (is_array($input)) {
-		$input = array_map('get_input_filter', $input);
-	} else {
-		$input = strip_tags($input);
-	}
-	return $input;
-}
-
-/**
- * Gère le fichier téléchargé par l'utilisateur.
- *
- * @param string $basedir Chemin de base où les fichiers doivent être enregistrés.
- * @return string Target path (ie. corresponds to $inputFile_path)
- */
-function enrichpdf_handle_uploaded_file($basedir = '', $debug = false) {
-	if ($debug) echo "Handle File upload<br />";
-	// Vérifiez si le dossier d'upload existe, sinon créez-le
-	if (!is_dir($basedir)) {
-		mkdir($basedir, 0750, true); // Création récursive avec permissions 755
-	}
-	if ($debug) echo " - dir OK<br />";
-
-	// Vérifiez si un fichier a été envoyé
-	if (!isset($_FILES['uploaded_file']) || empty($_FILES['uploaded_file']['tmp_name'])) {
-		return false;
-	}
-	if ($debug) echo " - file OK<br />";
-
-	$file = $_FILES['uploaded_file'];
-	$file_name = basename($file['name']); // Récupère le nom du fichier
-	$file_name = enrichpdf_sanitize_filename($file_name); // Nettoyer le nom du fichier
-	$target_path = $basedir . $file_name; // Chemin complet pour l'enregistrement
-
-	// Vérifications de base sur le fichier
-	if ($file['error'] !== UPLOAD_ERR_OK) {
-		error_log("DEBUG - file upload failed : Erreur lors de l envoi du fichier");
-		return false;
-	}
-
-	// Vérifiez le type MIME (optionnel, pour plus de sécurité)
-	//$allowed_types = ['image/jpeg', 'image/png', 'application/pdf'];
-	$allowed_types = ['application/pdf'];
-	if (!in_array($file['type'], $allowed_types)) {
-		error_log("DEBUG - file upload : Type de fichier non autorisé. Types autorisés : PDF");
-		return false;
-	}
-
-	// Vérification de la taille du fichier
-	$max_size = 64 * 1024 * 1024; // 64 MB
-	if ($file['size'] > $max_size) {
-		error_log("DEBUG - file upload : Le fichier est trop volumineux. Taille maximale autorisée : 64MB");
-		return false;
-	}
-
-	// Déplacez temporairement le fichier pour lire son contenu
-	$temp_path = $file['tmp_name'];
-	$file_content = file_get_contents($temp_path); // Lire le contenu du fichier
-	if ($debug) echo " - content OK<br />";
-
-	// Utilisez la fonction `write_file` pour sauvegarder le fichier
-	if (write_file($target_path, $file_content)) {
-		if ($debug) echo " - write OK : $target_path<br />";
-		return $target_path;
-	}
-	return false;
-}
-
-
-/**
- * Nettoie un nom de fichier pour le rendre sûr et propre.
- *
- * @param string $filename Nom original du fichier.
- * @return string Nom nettoyé et sécurisé.
- */
-function enrichpdf_sanitize_filename($filename) {
-	// Remplacer les espaces par des underscores
-	$filename = str_replace(' ', '_', $filename);
-
-	// Remplacer les caractères accentués par leur équivalent non accentué
-	$filename = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $filename);
-
-	// Remplacer les caractères non autorisés par des underscores
-	$filename = preg_replace('/[^a-zA-Z0-9.\-_\[\]\(\)]/', '_', $filename);
-
-	// S'assurer que le fichier ne commence pas ou ne se termine pas par un "."
-	$filename = trim($filename, '.');
-	
-	// Ajoute un préfixe de date pour l'unicité des fichiers
-	$date_prefix = date("Y-m-d-H-i-s") . '_';
-
-	return $date_prefix . '_' . $filename;
-}
-
-
-/*
-// Load a file content from an URL
-function get_file_from_url($url) {
-	// File retrieval can fail on timeout or redirects, so make it more failsafe
-	$context = stream_context_create(array('http' => array('max_redirects' => 5, 'timeout' => 60)));
-	// using timestamp and URL hash for quick retrieval based on time and URL source unicity
-	return file_get_contents($url, false, $context);
-}
-*/
-
-
 
