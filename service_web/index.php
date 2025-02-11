@@ -87,18 +87,25 @@ if (isset($_REQUEST['ocr_lang']) && !empty($_REQUEST['ocr_lang'])) {
 
 // MODULES
 
-// Basic audif of PDF file
+// Basic audit of PDF file
 $module_audit = 'yes';
 if (isset($_REQUEST['module_audit']) && !empty($_REQUEST['module_audit'])) {
 	$module_audit = strip_tags($_REQUEST['module_audit']);
 	if (!empty($module_audit) && $module_audit != 'no') { $module_audit = 'yes'; } else { $module_audit = 'no'; }
 }
 
-// Add OCR as overlay
+// Add OCR as overlay (raw text)
 $module_ocr = 'yes';
 if (isset($_REQUEST['module_ocr']) && !empty($_REQUEST['module_ocr'])) {
 	$module_ocr = strip_tags($_REQUEST['module_ocr']);
 	if (!empty($module_ocr) && $module_ocr != 'no') { $module_ocr = 'yes'; } else { $module_ocr = 'no'; }
+}
+
+// Add structured text
+$module_struct_text = 'yes';
+if (isset($_REQUEST['module_struct_text']) && !empty($_REQUEST['module_struct_text'])) {
+	$module_struct_text = strip_tags($_REQUEST['module_struct_text']);
+	if (!empty($module_struct_text) && $module_struct_text != 'no') { $module_struct_text = 'yes'; } else { $module_struct_text = 'no'; }
 }
 
 // Add table detection and export
@@ -322,12 +329,17 @@ $html_form .= '<div><label>' . "Analyse niveau d'accessibilité du document sour
 	<option value="no">Non</option>
 	</select></label></div>';
 
-$html_form .= '<div><label>Extraire le texte (opérationnel) <select type="text" name="module_ocr" id="module_ocr" value="' . $module_ocr . '">
+	$html_form .= '<div><label>' . "Extraire le texte (opérationnel) " . '<select type="text" name="module_ocr" id="module_ocr" value="' . $module_ocr . '">
 	<option value="yes">Oui</option>
 	<option value="no">Non</option>
 	</select></label></div>';
 
-	$html_form .= '<div><label>' . "Extraire les données d'un tableau (à venir)" . '<select type="text" name="module_table" id="module_table" value="' . $module_table . '">
+	$html_form .= '<div><label>Reconstruire du texte structuré (à venir) <select type="text" name="module_struct_text" id="module_struct_text" value="' . $module_struct_text . '">
+	<option value="yes">Oui</option>
+	<option value="no">Non</option>
+	</select></label></div>';
+	
+	$html_form .= '<div><label>' . "Extraire les données d'un tableau (à venir) " . '<select type="text" name="module_table" id="module_table" value="' . $module_table . '">
 	<option value="no">Non</option>
 	<option value="yes">Oui</option>
 	</select></label></div>';
@@ -351,7 +363,7 @@ $html_form .= '</fieldset>';
 
 $html_form .= '<div class="clear-flex"></div>';
 
-$html_form .= '<p><button type="submit">Envoyer</button></p>';
+$html_form .= '<p><button type="submit">Envoyer le PDF et réaliser les opérations</button></p>';
 
 $html_form .= '</form>';
 
@@ -481,13 +493,33 @@ if ($action) {
 
 	}
 	
+	if ($module_table == 'yes') {
+		$generation_log .= "Module activé : Texte structuré<br />";
+
+		/*
+		$command = sprintf(
+			'bash %s %s',
+			$path_scripts . 'module_struct_text.sh',
+			escapeshellarg($inputFile_path),
+		);
+
+		//$module_struct_text_html .= accessible_documents_proc_open_return($command);
+		$return = accessible_documents_proc_open($command);
+		if ($return['return_code'] === 0) {
+			$module_struct_text_html .= '<pre>' . $return['stdout'] . '</pre>';
+		} else {
+			$module_struct_text_html .= '<pre>' . print_r($return, true) . '</pre>';
+		}
+		*/
+	}
+
 	// Extraction des tableaux
 	if ($module_table == 'yes') {
 		$generation_log .= "Module activé : Table<br />";
 		/*
 		$command = sprintf(
 			'bash %s %s',
-			$path_scripts . 'audit_pdf.sh',
+			$path_scripts . 'module_table.sh',
 			escapeshellarg($inputFile_path),
 		);
 
@@ -507,7 +539,7 @@ if ($action) {
 		/*
 		$command = sprintf(
 			'bash %s %s',
-			$path_scripts . 'audit_pdf.sh',
+			$path_scripts . 'module_image.sh',
 			escapeshellarg($inputFile_path),
 		);
 
