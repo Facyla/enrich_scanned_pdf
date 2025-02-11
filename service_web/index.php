@@ -594,44 +594,43 @@ if ($action) {
 		*/
 	}
 
+
+	// @TODO à mieux structurer et mettre en forme
+	// Ajout des résultats à la page
+	$html .= '<h2>Résultats des opérations sur le fichier PDF</h2>';
+	$html .= '<div class="generation-log"><h3>Informations techniques</h3>' . $generation_log . '</div>';
+
+	if (!empty($module_audit_html)) {
+		$html .= '<h3>Résultat du module : Audit du PDF</h3>';
+		$html .= $module_audit_html;
+	}
+
+	if (!empty($module_ocr_html)) {
+		$html .= '<h3>Résultat du module : OCR</h3>';
+		$html .= $module_ocr_html;
+	}
+
+	if (!empty($module_image_html)) {
+		$html .= '<h3>Résultat du module : Image</h3>';
+		$html .= $module_image_html;
+	}
+
+	if (!empty($module_table_html)) {
+		$html .= '<h3>Résultat du module : Table</h3>';
+		$html .= $module_table_html;
+	}
+
+	if (!empty($module_summary_html)) {
+		$html .= '<h3>Résultat du module : Sommaire</h3>';
+		$html .= $module_summary_html;
+	}
+
+	if (!empty($module_abstract_html)) {	
+		$html .= '<h3>Résultat du module : Résumé</h3>';
+		$html .= $module_abstract_html;
+	}
 }
 
-
-
-// @TODO à mieux structurer et mettre en forme
-// Ajout des résultats à la page
-$html .= '<h2>Résultats des opérations sur le fichier PDF</h2>';
-$html .= '<div class="generation-log"><h3>Informations techniques</h3>' . $generation_log . '</div>';
-
-if (!empty($module_audit_html)) {
-	$html .= '<h3>Résultat du module : Audit du PDF</h3>';
-	$html .= $module_audit_html;
-}
-
-if (!empty($module_ocr_html)) {
-	$html .= '<h3>Résultat du module : OCR</h3>';
-	$html .= $module_ocr_html;
-}
-
-if (!empty($module_image_html)) {
-	$html .= '<h3>Résultat du module : Image</h3>';
-	$html .= $module_image_html;
-}
-
-if (!empty($module_table_html)) {
-	$html .= '<h3>Résultat du module : Table</h3>';
-	$html .= $module_table_html;
-}
-
-if (!empty($module_summary_html)) {
-	$html .= '<h3>Résultat du module : Sommaire</h3>';
-	$html .= $module_summary_html;
-}
-
-if (!empty($module_abstract_html)) {	
-	$html .= '<h3>Résultat du module : Résumé</h3>';
-	$html .= $module_abstract_html;
-}
 
 $html .= '<br /><br /><br />';
 
