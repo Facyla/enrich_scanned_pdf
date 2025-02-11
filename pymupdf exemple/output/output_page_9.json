@@ -1,0 +1,30 @@
+{
+  "metadata": {
+    "format": "PDF 1.5",
+    "title": "CS Project - Neural Networks",
+    "author": "",
+    "subject": "",
+    "keywords": "",
+    "creator": "LaTeX with hyperref",
+    "producer": "pdfTeX-1.40.26",
+    "creationDate": "D:20241117181645Z",
+    "modDate": "D:20241117181645Z",
+    "trapped": "",
+    "encryption": null,
+    "file_path": "input.pdf",
+    "page_count": 13,
+    "page": 9
+  },
+  "toc_items": [
+    [
+      3,
+      "loop() function",
+      9
+    ]
+  ],
+  "tables": [],
+  "images": [],
+  "graphics": [],
+  "text": "This loop sets the cursor to the specified row and prints a substring of the text, starting\nfrom the current index i and ending at i + 16. It also sets the cursor to the first column of\nthe second row and prints the first 16 characters of the other text. The delay(200) function\nis used to create a scrolling effect by waiting for 200 milliseconds before updating again.\n\n**Reading Button Press:** The button state is read using buttonPressed = digitalRead\n(buttonPin); while displaying the text. This is done to check if the button is pressed during\nthe scrolling process. By continuously reading the button state, the program can respond\nto user input even while the text is being displayed. This ensures that the device remains\nresponsive to user actions.\n\n**3.2.3** **loop() function**\n\nThe loop() function is the main function that runs repeatedly after the setup() function. It\nhandles the core logic of the program, including checking the WiFi connection, fetching and\ndisplaying the current playing track information, and responding to button presses.\n\n**WiFi Connection Check:** The function first checks if the device is connected to WiFi\nusing WiFi.status() == WL CONNECTED. This ensures that the device only proceeds with\nfetching and displaying track information if it has an active internet connection.\n\n**Fetching Current Playing Track and Parse:** If the device is connected to WiFi,\nit fetches the current playing track information using the getCurrentPlay(access token)\nfunction from spotify.cpp. The response is stored in the String variable named request and\nparsed using the DynamicJsonDocument and deserializeJson functions from the ArduinoJson library. The relevant data, such as track name, track ID, artist name, playing status,\nprogress, and duration, are extracted from the JSON document.\n\n**Preparing the display:** Two strings, line1 and line2, are prepared for displaying on\nthe LCD screen. line1 contains the artist name and track name, while line2 contains the\nplaying status (either || for playing or > for paused) and the progress/duration in minutes\nand seconds with the variables associed formated just before.\n\n**Clearing LCD and Scrolling Text:** The LCD screen is cleared using lcd.clear(),\nand the scrollText function is called to display and scroll the prepared strings on the LCD\nscreen. As seen before, scrollText function handles the scrolling of long text on the first\nline.\n\n8\n\n\n-----\n\n",
+  "words": []
+}

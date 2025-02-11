@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "format": "PDF 1.5",
+    "title": "CS Project - Neural Networks",
+    "author": "",
+    "subject": "",
+    "keywords": "",
+    "creator": "LaTeX with hyperref",
+    "producer": "pdfTeX-1.40.26",
+    "creationDate": "D:20241117181645Z",
+    "modDate": "D:20241117181645Z",
+    "trapped": "",
+    "encryption": null,
+    "file_path": "input.pdf",
+    "page_count": 13,
+    "page": 6
+  },
+  "toc_items": [
+    [
+      1,
+      "Implementation",
+      6
+    ],
+    [
+      2,
+      "Code Structure",
+      6
+    ],
+    [
+      2,
+      "Main.ino",
+      6
+    ],
+    [
+      3,
+      "setup() function",
+      6
+    ]
+  ],
+  "tables": [],
+  "images": [],
+  "graphics": [],
+  "text": "## 3 Implementation\n\n### 3.1 Code Structure\n\n[The full source code project can be found in my GitHub here.](https://github.com/jo-s-eph/esp32-project)\nThe project is organized into several files:\n```\nmain.ino\n\n```\n  - Main program loop\n\n  - Hardware initialization\n\n  - Display management\n\n  - Button handling\n```\nspotify.cpp\n\n```\n  - Spotify API integration\n\n  - HTTP request handling\n```\nget token.py\n\n```\n  - OAuth2 authentication\n\n  - Access token generation\n\n### 3.2 Main.ino\n\n**3.2.1** **setup() function**\n\nThe setup() function is the standard function ithat runs once when the microcontroller is\npowered on or reset. It is used to initialize variables, pin modes, start using libraries, etc. In\nfunction, we setup everything needed : LCD Initialization, WiFi Connection, Button\n**Initialization.**\n\n**LCD Initialization:** Initializes the LCD, turns on the backlight, sets the cursor to the\nfirst row and first column, and prints \u201dConnecting...\u201d in order to provides visual feedback to\nthe user that the device is attempting to connect to WiFi. This LCD screen is usable with\nthe ESP32 thanks to the librairy LiquidCrystal I2C by Frank de Brabander.\n\n5\n\n\n-----\n\n",
+  "words": []
+}

@@ -1,0 +1,51 @@
+{
+  "metadata": {
+    "format": "PDF 1.5",
+    "title": "CS Project - Neural Networks",
+    "author": "",
+    "subject": "",
+    "keywords": "",
+    "creator": "LaTeX with hyperref",
+    "producer": "pdfTeX-1.40.26",
+    "creationDate": "D:20241117181645Z",
+    "modDate": "D:20241117181645Z",
+    "trapped": "",
+    "encryption": null,
+    "file_path": "input.pdf",
+    "page_count": 13,
+    "page": 12
+  },
+  "toc_items": [],
+  "tables": [],
+  "images": [
+    {
+      "number": 1,
+      "bbox": [
+        140.27999877929688,
+        215.91595458984375,
+        471.74346923828125,
+        502.5069885253906
+      ],
+      "transform": [
+        331.4634704589844,
+        0.0,
+        -0.0,
+        286.5910339355469,
+        140.27999877929688,
+        215.91595458984375
+      ],
+      "width": 783,
+      "height": 677,
+      "colorspace": 3,
+      "cs-name": "DeviceRGB",
+      "xres": 96,
+      "yres": 96,
+      "bpc": 8,
+      "size": 278901,
+      "has-mask": true
+    }
+  ],
+  "graphics": [],
+  "text": "The get token.py script handles the OAuth 2.0 authentication process to obtain a Spotify\naccess token. It starts by defining the Spotify credentials (CLIENT ID and CLIENT SECRET),\nthe redirect URI, and the required scope. The script generates an authorization URL, which\nthe user visits to log in and authorize the app. After authorization, the user is redirected to\nthe specified redirect URI with an authorization code.\nThe user then inputs this code into the script. The script exchanges the authorization\ncode for an access token by sending a POST request to Spotify\u2019s token endpoint with the\nnecessary headers and data.\n\nFigure 8: Client Credentials Flow\n\n[Some parts of this script are inspired by the Spotify API documentation examples and](https://github.com/spotify/web-api-examples/tree/master)\ntutorials from YouTube.\n\n11\n\n\n![](output/input.pdf-11-0.png)\n\n-----\n\n",
+  "words": []
+}
