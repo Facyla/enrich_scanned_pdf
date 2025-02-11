@@ -11,19 +11,20 @@
 // Fonctions/classes utilisées 
 require_once('functions.php');
 
-$debug = true; // @debug enable only for debug
+$debug = false; // @debug enable only for debug
 
 // Définir le chemin absolu du script Bash à exécuter
 $baseDir = dirname(__FILE__) . '/'; // Répertoire parent de celui où se trouve ce script PHP
-$bashScript = $baseDir . '_scripts/Enrich_PDF.sh'; // Chemin absolu du script Bash
 
 $path_scripts = $baseDir . '_scripts/';
 $path_source = $baseDir . '_data/source/';
 $path_temp = $baseDir . '_data/temp/';
 $path_output = $baseDir . '_data/output/';
 
+$module_ocr_script = $path_scripts . 'Enrich_PDF.sh'; // Chemin absolu du script Bash
 
-// Envoi du fichier généré si demandé (seulement depuis le dossier défini)
+
+/* Envoi du fichier généré si demandé (seulement depuis des emplacements autorisés) */
 $served_file = enrichpdf_serve_file_if_request($baseDir);
 /*
 if (isset($_REQUEST['serve_file'])) {
@@ -84,77 +85,111 @@ if (isset($_REQUEST['ocr_lang']) && !empty($_REQUEST['ocr_lang'])) {
 	$OCRLanguage = strip_tags($_REQUEST['ocr_lang']);
 }
 
-// Add a PDF summary
-$addSummary = 'yes';
-if (isset($_REQUEST['add_summary']) && !empty($_REQUEST['add_summary'])) {
-	$addSummary = strip_tags($_REQUEST['add_summary']);
-	if (!empty($addSummary) && $addSummary != 'no') { $addSummary = 'yes'; } else { $addSummary = 'no'; }
+// MODULES
+
+// Basic audif of PDF file
+$module_audit = 'yes';
+if (isset($_REQUEST['module_audit']) && !empty($_REQUEST['module_audit'])) {
+	$module_audit = strip_tags($_REQUEST['module_audit']);
+	if (!empty($module_audit) && $module_audit != 'no') { $module_audit = 'yes'; } else { $module_audit = 'no'; }
 }
 
-// Use LLMs to improve text recognition
-$useLLM = 'yes';
-if (isset($_REQUEST['use_llm']) && !empty($_REQUEST['use_llm'])) {
-	$useLLM = strip_tags($_REQUEST['use_llm']);
-	if (!empty($useLLM) && $useLLM != 'no') { $useLLM = 'yes'; } else { $useLLM = 'no'; }
+// Add OCR as overlay
+$module_ocr = 'yes';
+if (isset($_REQUEST['module_ocr']) && !empty($_REQUEST['module_ocr'])) {
+	$module_ocr = strip_tags($_REQUEST['module_ocr']);
+	if (!empty($module_ocr) && $module_ocr != 'no') { $module_ocr = 'yes'; } else { $module_ocr = 'no'; }
 }
+
+// Add table detection and export
+$module_table = 'no';
+if (isset($_REQUEST['module_table']) && !empty($_REQUEST['module_table'])) {
+	$module_table = strip_tags($_REQUEST['module_table']);
+	if (!empty($module_table) && $module_table != 'no') { $module_table = 'yes'; } else { $module_table = 'no'; }
+}
+
+// Add image description
+$module_image = 'no';
+if (isset($_REQUEST['module_image']) && !empty($_REQUEST['module_image'])) {
+	$module_image = strip_tags($_REQUEST['module_image']);
+	if (!empty($module_image) && $module_image != 'no') { $module_image = 'yes'; } else { $module_image = 'no'; }
+}
+
+// Add a summary
+$module_summary = 'no';
+if (isset($_REQUEST['module_summary']) && !empty($_REQUEST['module_summary'])) {
+	$module_summary = strip_tags($_REQUEST['module_summary']);
+	if (!empty($module_summary) && $module_summary != 'no') { $module_summary = 'yes'; } else { $module_summary = 'no'; }
+}
+
+// Add an abstract
+$module_abstract = 'no';
+if (isset($_REQUEST['module_abstract']) && !empty($_REQUEST['module_abstract'])) {
+	$module_abstract = strip_tags($_REQUEST['module_abstract']);
+	if (!empty($module_abstract) && $module_abstract != 'no') { $module_abstract = 'yes'; } else { $module_abstract = 'no'; }
+}
+
 
 
 
 // Formulaire pour utilisation en ligne (GET car on veut une web-API)
 $html = '';
-$html .= '<html lang="fr">
-<head>
-	<title>' . "Service d'enrichissement de fichiers PDF scannés" . '</title>
+$html .= '
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="fr" lang="fr">
+<title>' . "Service d'enrichissement et de mise en accessibilité de fichiers PDF image" . '</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 	<meta name="description" value="Ajoute des données textuelles d\'accessibilité et d\'indexation à des fichiers PDF scannés" />
 	<meta name="tags" value="PDF, PDF/UA, accessible, OCR, indexation, reconnaissance de caractères" />
-  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <!--
+
+	<meta name="mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.1, maximum-scale=10.0, user-scalable=1">
+	
   <link rel="stylesheet" href="style.css">
-  //-->
-  <style>
-  body { font-family: Arial; }
-	pre { padding: .25rem .5rem; color: white; background: black; }
-	code { padding: 0 .25rem; color: white; background: black; }
-	form#enrich-pdf { border: 3px solid #AFA; background: #DFD; padding: .5rem 1rem; display: flex; flex-wrap: wrap; grid-gap: 1rem; }
-	#enrich-pdf p { margin: .5rem 0 .5rem 0; }
-	#enrich-pdf > div { display: inline-block; flex: 0 1 calc(100% / 3 - 2rem - 3 * 3px); margin: 0; padding: .5rem; border: 3px dotted #0F0; font-size: 1.2rem; }
-	#enrich-pdf input, #enrich-pdf select { min-width: 20rem; }
-	#enrich-pdf input[type="checkbox"], #enrich-pdf input[type="radio"] { min-width: initial; }
-	#enrich-pdf input[type="file"] { display: inline-block; border: 3px dashed #333; margin: 1rem; padding: 1rem; background: #EAEAEA; width: calc(100% - 2rem); min-height: 5rem; }
-	#enrich-pdf .clear-flex { border: 0; margin: 0; padding: 0; display: block; flex: 0 0 100%; }
-	#enrich-pdf button { background: green; border: 3px outset green; border-radius: .5rem; color: white; font-weight: bold; padding: .5rem 1rem; font-size: 1.5rem; }
-	#enrich-pdf button:hover { border-style: inset; }
-	.link-download { border: 1px solid darkred; background: #C42D43; color: white; font-weight: bold; text-decoration: none; border-radius: .25rem; padding: .5rem 1rem; }
-	</style>
 </head>
 <body>';
-$html .= '<h2>Reconnaissance de caractères et enrichissement de documents PDF scannés pour les rendre accessibles et indexables</h2>';
+$html .= '<h2>Présentation du service</h2>';
+$html .= "<p>Ce service web s'appuie sur différents composants open source pour fournir un service d'amélioration de l'accessibilité de documents PDF.</p>";
+$html .= "<p>Il s'adresse aux utilisateurs de ces documents, et vise à pallier des manques de documents tels qu'ils sont reçus. Conçu pour rester d'un usage simple, il vous permet de charger un document PDF image, ou très peu accessible, afin d'en extraire des informations utiles pour la compréhension du contenu du document, d'enrichir le document initial avec ces données textuelles structurées, pour récupérer un fichier PDF/UA enrichi avec ces éléments.</p>";
+$html .= "<p>Modulaire, il est conçu pour pouvoir permettre de réaliser différentes opérations selon le type de document source&nbsp;:</p>
+<ul>
+	<li>une analyse rapide qui permet d'identifier un niveau d'accessibilité élémentaire du document (PDF image, avec ou sans texte, avec ou sans structure, etc.),</li>
+	<li>de l'extraction de texte à partir d'image (OCR), afin de pouvoir proposer une alternative textuelle,</li>
+	<li>de générer des titres et de structurer son contenu</li>
+	<li>d'ajouter des métadonnées nécessaire à un rendu correct du texte alternatif</li>
+	<li>d'identifier et d'exporter des élements kdu document : images, blocs de textes, tableaux, etc.</li>
+</ul>";
+$html .= "<p>ATTENTION&nbsp;: Cette page est un prototype qui vise à valider le principe de fonctionnement de cette chaîne d'amélioration de l'accessibilité de PDF : certaines des fonctionnalités décrites peuvent être disponibles et opérationnelles, ou encore en projet.</p>";
 
 
 // # Formulaire HTML
-$html .= '<h3>' . "Reconnaissance de caractères et enrichissement d'un PDF scanné" . '</h3>';
+$html .= '<h2>' . "Utilisation du service" . '</h2>';
 
 //$html .= '<form id="enrich-pdf" method="GET">';
-$html .= '<form id="enrich-pdf" method="POST" enctype="multipart/form-data">';
+$html_form = '';
+$html_form .= '<form id="enrich-pdf" method="POST" enctype="multipart/form-data">';
 
-$html .= '<input type="hidden" name="action" value="process" />
-  <div><label>Choississez un fichier PDF <input type="file" name="uploaded_file" id="file" /></label><br /><em>Faites glisser le PDF à enrichir, ou cliquez pour le choisir parmi vos fichiers.</em></div>';
+$html_form .= '<input type="hidden" name="action" value="process" />
+	<fieldset><legend>PDF source et options</legend>	
+	
+		<div><label>Choississez un fichier PDF à traiter <input type="file" name="uploaded_file" id="file" /></label><br /><em>Faites glisser le PDF à enrichir, ou cliquez pour le choisir parmi vos fichiers.</em></div>';
 
 //$html .= '<div><label>Nom du fichier source <input type="text" name="input" placeholder="Nom_du_scan_PDF.pdf" value="' . $inputFile . '" /></label><br /><em>Si le fichier existe déjà dans le répertoire, indiquer son  (démo, envoi précédent)</em></div>
 
-$html .= '<div><label>OCR : choix de la langue <select type="text" name="ocr_lang" id="ocr_lang">
-		<option value="fra" selected="selected">French</option>
-		<option value="eng">English</option>
-		<option value="rus">Russian</option>
-		<option value="ara">Arabic</option>
-		<option value="tha">Thai</option>
-		<option value="deu">German</option>
-		<option value="spa">Spanish; Castilian</option>
-		<option value="ita">Italian</option>';
+$html_form .= '<div><label>Choississez la langue pour la reconnaissance du texte <select type="text" name="ocr_lang" id="ocr_lang" value="' . $ocr_lang . '">
+		<option value="fra">Français</option>
+		<option value="eng">Englais</option>
+		<option value="rus">Russe</option>
+		<option value="ara">Arabe</option>
+		<option value="tha">Thaï</option>
+		<option value="deu">Allemand</option>
+		<option value="spa">Espagnol (Castillan)</option>
+		<option value="ita">Italien</option>';
 /*
-$html .= '
+$html_form .= '
 		<option value="afr">Afrikaans</option>
 		<option value="amh">Amharic</option>
 		<option value="asm">Assamese</option>
@@ -275,60 +310,60 @@ $html .= '
 		<option value="yid">Yiddish</option>
 		<option value="yor">Yoruba</option>';
 */
-$html .= '
+$html_form .= '
   </select></label></div>';
+$html_form .= '</fieldset>';	
 
 
-$html .= '<fieldset><legend>Traitements à effectuer</legend>';	
-$html .= '<div><label>Extraction du texte <select type="text" name="module_ocr" id="module_ocr">
-	<option value="yes" selected="selected">Oui</option>
-	<option value="no">Non</option>
-	</select>';
+$html_form .= '<fieldset><legend>Choix des opérations à effectuer sur ce document</legend>';
 
-	$html .= '<div><label>' . "Extraction données d'un tableau " . '<select type="text" name="module_table" id="module_table">
-	<option value="yes" selected="selected">Oui</option>
+$html_form .= '<div><label>' . "Analyse niveau d'accessibilité du document source (à venir) " . '<select type="text" name="module_audit" id="module_audit" value="' . $module_audit . '">
+	<option value="yes">Oui</option>
 	<option value="no">Non</option>
 	</select></label></div>';
 
-	$html .= '<div><label>' . "Description d'une image " . '<select type="text" name="module_image" id="module_image">
-	<option value="yes" selected="selected">Oui</option>
+$html_form .= '<div><label>Extraire le texte (opérationnel) <select type="text" name="module_ocr" id="module_ocr" value="' . $module_ocr . '">
+	<option value="yes">Oui</option>
 	<option value="no">Non</option>
 	</select></label></div>';
 
-	$html .= '<div><label>' . "Analyse niveau d'accessibilité du document source " . '<select type="text" name="module_audit" id="module_audit">
-	<option value="yes" selected="selected">Oui</option>
+	$html_form .= '<div><label>' . "Extraire les données d'un tableau (à venir)" . '<select type="text" name="module_table" id="module_table" value="' . $module_table . '">
 	<option value="no">Non</option>
+	<option value="yes">Oui</option>
 	</select></label></div>';
 
-	/*
-$html .= '<div><label>Nom du fichier enrichi <input type="text" name="output" placeholder="Page_de_garde_PDFUA.pdf" value="' . $outputFile . '"></label></div>';
+	$html_form .= '<div><label>' . "Description d'une image (à venir) " . '<select type="text" name="module_image" id="module_image" value="' . $module_image . '">
+	<option value="no">Non</option>
+	<option value="yes">Oui</option>
+	</select></label></div>';
 
-//$html .= '<div><label>Chemin du dossier temporaire<input type="text" name="temp_path" value="" />' . $temp_path . '</label></div>';
+	$html_form .= '<div><label>' . "Générer un sommaire (à venir) " . '<select type="text" name="module_summary" id="module_summary" value="' . $module_summary . '">
+	<option value="no">Non</option>
+	<option value="yes">Oui</option>
+	</select></label></div>';
 
-if ($addSummary != 'no') {
-	$html .= '<div><label>Générer un sommaire <input type="checkbox" name="add_summary" value="yes" checked="checked" /></label></div>';
-} else {
-	$html .= '<div><label>Générer un sommaire <input type="checkbox" name="add_summary" value="yes" /></label></div>';
-}
+	$html_form .= '<div><label>' . "Générer un résumé (à venir) " . '<select type="text" name="module_abstract" id="module_abstract" value="' . $module_abstract . '">
+	<option value="no">Non</option>
+	<option value="yes">Oui</option>
+	</select></label></div>';
 
-if ($useLLM != 'no') {
-	$html .= '<div><label>Utiliser un LLM pour corriger le texte océrisé <input type="checkbox" name="use_llm" id="use_llm" value="yes" checked="checked" /></label></div>';
-} else {
-	$html .= '<div><label>Utiliser un LLM pour corriger le texte océrisé <input type="checkbox" name="use_llm" id="use_llm" value="yes" /></label></div>';
-}
-*/
-$html .= '</fieldset>';	
+$html_form .= '</fieldset>';	
 
-$html .= '<div class="clear-flex"></div>';
-$html .= '<p><button type="submit">Envoyer</button></p>';
-$html .= '</form>';
+$html_form .= '<div class="clear-flex"></div>';
+
+$html_form .= '<p><button type="submit">Envoyer</button></p>';
+
+$html_form .= '</form>';
+
+// Ajout au HTML global
+$html .= $html_form;
 
 
 
-
-// Exécution de la commande - traitement du PDF
+/* Traitement du PDF : application des séries de manipulation et génération de sorties utiles */
 if ($action) {
-	
+	$generation_log = ''; // Informations utiles au traitement du fichier (hors pur debug) : échec, motifs d'interruption, etc.
+
 	// Traitement fichier envoyé ssi l'un est indiqué, sinon fallback sur le nom de fichier indiqué
 	if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_FILES['uploaded_file']['name'])) {
 		// Traitement du fichier envoyé
@@ -343,63 +378,230 @@ if ($action) {
 		}
 	}
 	// Block processing if no file name and no file sent
-	if (empty($inputFile)) { $can_process = false; if ($debug) echo "DEBUG : empty inputFile"; }
+	if (empty($inputFile)) { $can_process = false; $generation_log .= "ERREUR : fichier source vide<br />"; if ($debug) $html .= "DEBUG : empty inputFile"; }
 	
 	// Vérification que le fichier existe, sinon on ne peut pas continuer
-	if (!file_exists($inputFile_path)) { $can_process = false; if ($debug) echo "DEBUG : inputFile don't exist at $inputFile_path"; }
+	if (!file_exists($inputFile_path)) { $can_process = false; if ($debug) $html .= "DEBUG : inputFile don't exist at $inputFile_path"; }
 	
-	if ($debug) echo "DEBUG : file sent and uploaded to $inputFile_path<br />";
-	
-	// Construction de la commande à exécuter - les paramètres doivent être dans l'ordre
-	$command = sprintf(
-		'bash %s %s %s %s %s',
-		$bashScript,
-		escapeshellarg($inputFile_path),
-		escapeshellarg($OCRLanguage),
-		escapeshellarg($outputFile_path),
-		escapeshellarg($addSummary),
-		escapeshellarg($useLLM)
-	);
+	if ($debug) { $html .= "DEBUG : file sent and uploaded to $inputFile_path<br />"; }
+
+	// @TODO Permettre de différer l'envoi du fichier et les traitements : pour cela on s'appuierait sur un hash du contenu, 
+	// de manière à pouvoir effectuer des opérations sans charger de nouveaux fichiers
+	$source_hash = hash_file('sha256', $inputFile_path);
+	$generation_log .= "Hash du fichier source : $source_hash<br />";
 
 
-	// Debug only - sensitive information
-	if ($debug) {
-		$html .= '<h3>DEBUG</h3>';
-		$html .= '<ul>';
-			$html .= '<li>baseDir : <code>' . $baseDir . '</code></li>';
-			$html .= '<li>bashScript : <code>' . $bashScript . '</code></li>';
-			$html .= '<li>inputFile : <code>' . $inputFile . '</code></li>';
-			$html .= '<li>inputFile_path : <code>' . $inputFile_path . '</code></li>';
-			$html .= '<li>outputFile : <code>' . $outputFile . '</code></li>';
-			$html .= '<li>outputFile_path : <code>' . $outputFile_path . '</code></li>';
-			$html .= '<li>addSummary : <code>' . $addSummary . '</code></li>';
-			$html .= '<li>useLLM : <code>' . $useLLM . '</code></li>';
-			$html .= '<li>can_process : <code>' . $can_process . '</code></li>';
-		$html .= '</ul>';
-		$html .= '<p>Commande : <code>' . $command . '</code></p>';
+	// @TODO : exécuter les modules selon les demandes
+
+	// Audit rapide de l'accessibilité du fichier source
+	if ($module_audit == 'yes') {
+		$generation_log .= "Module activé : audit<br />";
+		$command = sprintf(
+			'bash %s %s',
+			$path_scripts . 'audit_pdf.sh',
+			escapeshellarg($inputFile_path),
+		);
+		$return = accessible_documents_proc_open($command);
+		if ($return['return_code'] === 0) {
+			$module_audit_html .= '<pre>' . $return['stdout'] . '</pre>';
+		} else {
+			$module_audit_html .= '<pre>' . print_r($return, true) . '</pre>';
+		}
+		//$module_audit_html .= accessible_documents_proc_open_return($command);
 	}
 
-	if ($debug) echo "DEBUG : file sent and uploaded to $inputFile_path<br />";
-  if ($can_process) {
-  	if ($debug) echo "DEBUG : processing file $inputFile_path<br />";
-		$result = enrichpdf_process($command, $inputFile_path, $outputFile_path, $baseDir, $OCRLanguage, $addSummary, $useLLM, $debug);
-		if ($debug) { $html .= '<pre>' . print_r($result, true) . '</pre>'; }
-		if ($result['status']) {
+	// Océrisation simple
+	if ($module_ocr == 'yes') {
+		$generation_log .= "Module activé : OCR<br />";
+		// Construction de la commande à exécuter - les paramètres doivent être dans l'ordre
+		$command = sprintf(
+			'bash %s %s %s %s %s',
+			$module_ocr_script,
+			escapeshellarg($inputFile_path),
+			escapeshellarg($OCRLanguage),
+			escapeshellarg($outputFile_path),
+			escapeshellarg($module_summary),
+			escapeshellarg($useLLM)
+		);
+
+		// Debug only - sensitive information
+		if ($debug) {
+			$html .= '<h3>DEBUG</h3>';
+			$html .= '<ul>';
+				$html .= '<li>baseDir : <code>' . $baseDir . '</code></li>';
+				$html .= '<li>bashScript : <code>' . $module_ocr_script . '</code></li>';
+				$html .= '<li>inputFile : <code>' . $inputFile . '</code></li>';
+				$html .= '<li>inputFile_path : <code>' . $inputFile_path . '</code></li>';
+				$html .= '<li>outputFile : <code>' . $outputFile . '</code></li>';
+				$html .= '<li>outputFile_path : <code>' . $outputFile_path . '</code></li>';
+				$html .= '<li>module_audit : <code>' . $module_audit . '</code></li>';
+				$html .= '<li>module_ocr : <code>' . $module_ocr . '</code></li>';
+				$html .= '<li>module_table : <code>' . $module_table . '</code></li>';
+				$html .= '<li>module_image : <code>' . $module_image . '</code></li>';
+				$html .= '<li>module_summary : <code>' . $module_summary . '</code></li>';
+				$html .= '<li>module_abstract : <code>' . $module_abstract . '</code></li>';
+				$html .= '<li>can_process : <code>' . $can_process . '</code></li>';
+			$html .= '</ul>';
+			$html .= '<p>Commande : <code>' . $command . '</code></p>';
+		}
+
+		/* @TODO use more modular code structure
+		$return = accessible_documents_proc_open($command);
+		if ($return['return_code'] === 0) {
 			$generated_file_name = basename($result['enriched_pdf_path']);
-			$encodedFileName = urlencode(base64_encode($generated_file_name));
-			
-			$html .= '<h3>Résultat : fichier PDF accessible et indexable généré</h3>';
-			$html .= '<a class="link-download" href="?serve_file=' . $encodedFileName . '" target="_blank">Télécharger le fichier ' . $generated_file_name . '</a>';
+			$encodedFileName = urlencode(base64_encode($generated_file_name));			
+			$module_ocr_html .= 'Fichier PDF avec alternartive textuelle généré&nbsp;: ';
+			$module_ocr_html .= '<a class="link-download" href="?serve_file=' . $encodedFileName . '" target="_blank">Télécharger le fichier ' . $generated_file_name . '</a>';
+			// Debug data
+			$module_audit_html .= '<pre class="toggable" style="display: none;">' . $return['stdout'] . '</pre>';
 		} else {
-			$html .= '<h3>Résultat : ECHEC</p>';
+			$module_audit_html .= '<pre>' . print_r($return, true) . '</pre>';
 		}
-		if (!empty(trim($result['message']))) {
-			$html .= '<p>Message : ' . $result['message'] . '</p>';
+		*/
+
+		if ($debug) $module_ocr_html .= "DEBUG : file sent and uploaded to $inputFile_path<br />";
+		if ($can_process) {
+			if ($debug) $module_ocr_html .= "DEBUG : processing file $inputFile_path<br />";
+			$result = enrichpdf_process($command, $inputFile_path, $outputFile_path, $baseDir, $OCRLanguage, $module_summary, $useLLM, $debug);
+			if ($debug) { $module_ocr_html .= '<pre>' . print_r($result, true) . '</pre>'; }
+
+			if ($result['status']) {
+				$generated_file_name = basename($result['enriched_pdf_path']);
+				$encodedFileName = urlencode(base64_encode($generated_file_name));
+				
+				$module_ocr_html .= 'Fichier PDF avec alternative textuelle généré&nbsp;: ';
+				$module_ocr_html .= '<a class="link-download" href="?serve_file=' . $encodedFileName . '" target="_blank">Télécharger le fichier ' . $generated_file_name . '</a>';
+			} else {
+				$module_ocr_html .= 'ECHEC';
+			}
+			if (!empty(trim($result['message']))) {
+				$module_ocr_html .= '<p>Message : ' . $result['message'] . '</p>';
+			}
 		}
-  }
+
+	}
+	
+	// Extraction des tableaux
+	if ($module_table == 'yes') {
+		$generation_log .= "Module activé : Table<br />";
+		/*
+		$command = sprintf(
+			'bash %s %s',
+			$path_scripts . 'audit_pdf.sh',
+			escapeshellarg($inputFile_path),
+		);
+
+		//$module_table_html .= accessible_documents_proc_open_return($command);
+		$return = accessible_documents_proc_open($command);
+		if ($return['return_code'] === 0) {
+			$module_table_html .= '<pre>' . $return['stdout'] . '</pre>';
+		} else {
+			$module_table_html .= '<pre>' . print_r($return, true) . '</pre>';
+		}
+		*/
+	}
+
+	// Traitement des images
+	if ($module_image == 'yes') {
+		$generation_log .= "Module activé : Image<br />";
+		/*
+		$command = sprintf(
+			'bash %s %s',
+			$path_scripts . 'audit_pdf.sh',
+			escapeshellarg($inputFile_path),
+		);
+
+		//$module_image_html .= accessible_documents_proc_open_return($command);
+		$return = accessible_documents_proc_open($command);
+		if ($return['return_code'] === 0) {
+			$module_image_html .= '<pre>' . $return['stdout'] . '</pre>';
+		} else {
+			$module_image_html .= '<pre>' . print_r($return, true) . '</pre>';
+		}
+		*/
+
+	}
+
+	// Génération d'un sommaire
+	if ($module_summary == 'yes') {
+		$generation_log .= "Module activé : Sommaire<br />";
+		/*
+		$command = sprintf(
+			'bash %s %s',
+			$path_scripts . 'module_summary.sh',
+			escapeshellarg($inputFile_path),
+		);
+
+		//$module_summary_html .= accessible_documents_proc_open_return($command);
+		$return = accessible_documents_proc_open($command);
+		if ($return['return_code'] === 0) {
+			$module_summary_html .= '<pre>' . $return['stdout'] . '</pre>';
+		} else {
+			$module_summary_html .= '<pre>' . print_r($return, true) . '</pre>';
+		}
+		*/
+	}
+
+	// Génération d'un résumé
+	if ($module_abstract == 'yes') {
+		$generation_log .= "Module activé : Résumé<br />";
+		/*
+		$command = sprintf(
+			'bash %s %s',
+			$path_scripts . 'module_abstract.sh',
+			escapeshellarg($inputFile_path),
+		);
+
+		//$module_abstract_html .= accessible_documents_proc_open_return($command);
+		$return = accessible_documents_proc_open($command);
+		if ($return['return_code'] === 0) {
+			$module_abstract_html .= '<pre>' . $return['stdout'] . '</pre>';
+		} else {
+			$module_abstract_html .= '<pre>' . print_r($return, true) . '</pre>';
+		}
+		*/
+	}
+
 }
 
 
+
+// @TODO à mieux structurer et mettre en forme
+// Ajout des résultats à la page
+$html .= '<h2>Résultats des opérations sur le fichier PDF</h2>';
+$html .= '<div class="generation-log"><h3>Informations techniques</h3>' . $generation_log . '</div>';
+
+if (!empty($module_audit_html)) {
+	$html .= '<h3>Résultat du module : Audit du PDF</h3>';
+	$html .= $module_audit_html;
+}
+
+if (!empty($module_ocr_html)) {
+	$html .= '<h3>Résultat du module : OCR</h3>';
+	$html .= $module_ocr_html;
+}
+
+if (!empty($module_image_html)) {
+	$html .= '<h3>Résultat du module : Image</h3>';
+	$html .= $module_image_html;
+}
+
+if (!empty($module_table_html)) {
+	$html .= '<h3>Résultat du module : Table</h3>';
+	$html .= $module_table_html;
+}
+
+if (!empty($module_summary_html)) {
+	$html .= '<h3>Résultat du module : Sommaire</h3>';
+	$html .= $module_summary_html;
+}
+
+if (!empty($module_abstract_html)) {	
+	$html .= '<h3>Résultat du module : Résumé</h3>';
+	$html .= $module_abstract_html;
+}
+
+$html .= '<br /><br /><br />';
 
 $html .= '</body></html>';
 

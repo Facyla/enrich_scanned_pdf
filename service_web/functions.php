@@ -17,8 +17,9 @@
 function enrichpdf_process($command = '', $inputFile = '', $outputFile = '', $baseDir = '', $OCRLanguage = 'fra', $addSummary = true, $useLLM = true, $debug = false) {
 	if (empty($command)) { return false; }
 	if (empty($inputFile)) { return false; }
-	
-	if ($debug) { echo "DEBUG : $command<br />"; }
+	$return = '';
+
+	if ($debug) { $return .= "DEBUG : $command<br />"; }
 	
 	$status = false; // Return status (true|false)
 	$return = ''; // Return message
@@ -34,7 +35,7 @@ function enrichpdf_process($command = '', $inputFile = '', $outputFile = '', $ba
 
 	$process = proc_open($command, $descriptors, $pipes);
 	if (is_resource($process)) {
-		if ($debug) { echo "DEBUG : ressource OK<br />"; }
+		if ($debug) { $return .= "DEBUG : ressource OK<br />"; }
 		// Lire la sortie et les erreurs
 		fclose($pipes[0]); // Close stdin
 		$output = stream_get_contents($pipes[1]); // Capture stdout
@@ -95,7 +96,7 @@ function enrichpdf_serve_generated_file($outputFile) {
 	if (!file_exists($outputFile)) {
 		header("HTTP/1.1 404 Not Found");
 		echo "Fichier introuvable.";
-		return;
+		return false;
 	}
 
 	// Définir les en-têtes pour forcer le téléchargement
@@ -105,8 +106,8 @@ function enrichpdf_serve_generated_file($outputFile) {
 	header("Content-Length: " . filesize($outputFile));
 
 	// Lire et envoyer le fichier
-	readfile($outputFile);
-	return;
+	if (readfile($outputFile)) { return true; }
+	return false;
 }
 
 
@@ -175,18 +176,18 @@ function get_input_filter($input) {
  * @return string Target path (ie. corresponds to $inputFile_path)
  */
 function enrichpdf_handle_uploaded_file($basedir = '', $debug = false) {
-	if ($debug) echo "Handle File upload<br />";
+	//if ($debug) echo "Handle File upload<br />";
 	// Vérifiez si le dossier d'upload existe, sinon créez-le
 	if (!is_dir($basedir)) {
 		mkdir($basedir, 0750, true); // Création récursive avec permissions 755
 	}
-	if ($debug) echo " - dir OK<br />";
+	//if ($debug) echo " - dir OK<br />";
 
 	// Vérifiez si un fichier a été envoyé
 	if (!isset($_FILES['uploaded_file']) || empty($_FILES['uploaded_file']['tmp_name'])) {
 		return false;
 	}
-	if ($debug) echo " - file OK<br />";
+	//if ($debug) echo " - file OK<br />";
 
 	$file = $_FILES['uploaded_file'];
 	$file_name = basename($file['name']); // Récupère le nom du fichier
@@ -217,11 +218,11 @@ function enrichpdf_handle_uploaded_file($basedir = '', $debug = false) {
 	// Déplacez temporairement le fichier pour lire son contenu
 	$temp_path = $file['tmp_name'];
 	$file_content = file_get_contents($temp_path); // Lire le contenu du fichier
-	if ($debug) echo " - content OK<br />";
+	//if ($debug) echo " - content OK<br />";
 
 	// Utilisez la fonction `write_file` pour sauvegarder le fichier
 	if (write_file($target_path, $file_content)) {
-		if ($debug) echo " - write OK : $target_path<br />";
+		//if ($debug) echo " - write OK : $target_path<br />";
 		return $target_path;
 	}
 	return false;
@@ -306,6 +307,7 @@ function accessible_documents_proc_open($command = '') {
 // Wrapper for easier use of accessible_documents_proc_open
 function accessible_documents_proc_open_return($command = '') {
 	$return = accessible_documents_proc_open($command);
+	echo print_r($return, true);
 	if ($return['return_code'] === 0) {
 		return $return['stdout'];
 	}
