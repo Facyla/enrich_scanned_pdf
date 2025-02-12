@@ -21,14 +21,30 @@ fi
 echo "TRAITEMENT du fichier $PDF_FILE_PATH"
 
 
-# Appel python
-python3 "$PDF_FILE_PATH" "$HASH_ID"
+# Vérification et Installation environnement (1 seule fois)
+# Chargement environnement python
+SCRIPT_DIR=$(dirname "$0")
+echo "- script dir : $SCRIPT_DIR"
+cd "$SCRIPT_DIR"
+if [ -d "./env" ]; then
+  echo "Le dossier 'env' existe."
+else
+  echo "Le dossier 'env' n'existe pas : création."
+  python3 -m venv env
+  ls -alh
+fi
+echo ""
+source "./env/bin/activate"
 
+#python3 "$PDF_FILE_PATH" "$HASH_ID"
+python_return=$(python3 "$PDF_FILE_PATH" "$HASH_ID")
+echo "Retour de la commande python : "
+echo "$python_return"
+exit
 
 # Extraction du nom de base du fichier sans extension
 SOURCE_NAME=$(basename "$PDF_FILE_PATH")
 SOURCE_BASE_NAME="${SOURCE_NAME%.md}"
-OUTPUT_BASE_NAME="${OUTPUT_PATH}/${SOURCE_BASE_NAME}"
 
 # Calcul du dossier de sortie en fonction du hash du fichier
 # si on veut calculer le chemin complet à partir d'un relatif : full_path=$(realpath "$relative_path")
@@ -39,9 +55,15 @@ echo " - Base path: $BASE_PATH"
 DATA_PATH=$(dirname "$BASE_PATH")
 echo " - Data path : $DATA_PATH"
 # Add "output/dir/" to the path
-OUTPUT_PATH="$DATA_PATH/output/${HASH_ID:-$SOURCE_BASE_NAME}/"
+OUTPUT_PATH="$OUTPUT_PATH/output/${HASH_ID:-$SOURCE_BASE_NAME}/"
 #OUTPUT_PATH="$DATA_PATH/output/"
 echo " - Output path : $OUTPUT_PATH"
+echo ""
+OUTPUT_BASE_NAME="${SOURCE_BASE_NAME}"
+
+MD_FILE_PATH="${OUTPUT_PATH}${SOURCE_NAME}.md"
+echo " - MD file path : $MD_FILE_PATH"
+
 
 # Check if the folder exists, if not, create it
 if [ ! -d "$OUTPUT_PATH" ]; then
@@ -52,32 +74,32 @@ else
   echo "Le dossier de sortie existe."
 fi
 
-echo "Conversion de $PDF_FILE_PATH dans plusieurs formats :"
+echo "Conversion de $MD_FILE_PATH dans plusieurs formats :"
 echo "Les fichiers générés seront dans : $OUTPUT_PATH"
 
 # 1. HTML
-pandoc "$PDF_FILE_PATH" -o "${OUTPUT_PATH}${OUTPUT_BASE_NAME}.html"
+pandoc "$MD_FILE_PATH" -o "${OUTPUT_PATH}${OUTPUT_BASE_NAME}.html"
 echo "HTML généré : ${OUTPUT_PATH}${OUTPUT_BASE_NAME}.html"
 
 # 2. JSON (représentation syntaxique Pandoc)
-pandoc "$PDF_FILE_PATH" -t json -o "${OUTPUT_PATH}${OUTPUT_BASE_NAME}.json"
+pandoc "$MD_FILE_PATH" -t json -o "${OUTPUT_PATH}${OUTPUT_BASE_NAME}.json"
 echo "JSON généré : ${OUTPUT_PATH}${OUTPUT_BASE_NAME}.json"
 
 # 3. XML (utilisation du format JATS)
-pandoc "$PDF_FILE_PATH" -t jats -o "${OUTPUT_PATH}${OUTPUT_BASE_NAME}.xml"
+pandoc "$MD_FILE_PATH" -t jats -o "${OUTPUT_PATH}${OUTPUT_BASE_NAME}.xml"
 echo "XML (JATS) généré : ${OUTPUT_PATH}${OUTPUT_BASE_NAME}.xml"
 
 # 4. CSV (extraction simple des tableaux)
 csv_file="${OUTPUT_PATH}${OUTPUT_BASE_NAME}.csv"
-grep -A 1000 "^ *\\|" "$PDF_FILE_PATH" | sed '/^ *$/q' > "$csv_file"
+grep -A 1000 "^ *\\|" "$MD_FILE_PATH" | sed '/^ *$/q' > "$csv_file"
 echo "CSV généré (simple extraction des tableaux) : $csv_file"
 
 # 5. ODT (OpenDocument Text)
-pandoc "$PDF_FILE_PATH" -o "${OUTPUT_PATH}${OUTPUT_BASE_NAME}.odt"
+pandoc "$MD_FILE_PATH" -o "${OUTPUT_PATH}${OUTPUT_BASE_NAME}.odt"
 echo "ODT généré : ${OUTPUT_PATH}${OUTPUT_BASE_NAME}.odt"
 
 # 6. DOCX (Microsoft Word)
-pandoc "$PDF_FILE_PATH" -o "${OUTPUT_PATH}${OUTPUT_BASE_NAME}.docx"
+pandoc "$MD_FILE_PATH" -o "${OUTPUT_PATH}${OUTPUT_BASE_NAME}.docx"
 echo "DOCX généré : ${OUTPUT_PATH}${OUTPUT_BASE_NAME}.docx"
 
 # 7. ODS (OpenDocument Spreadsheet) via LibreOffice
@@ -89,7 +111,7 @@ libreoffice --headless --convert-to xlsx "${OUTPUT_PATH}${OUTPUT_BASE_NAME}.odt"
 echo "XLSX généré : ${OUTPUT_PATH}${OUTPUT_BASE_NAME}.xlsx"
 
 # 9. RTF (Rich Text Format)
-pandoc "$PDF_FILE_PATH" -o "${OUTPUT_PATH}${OUTPUT_BASE_NAME}.rtf"
+pandoc "$MD_FILE_PATH" -o "${OUTPUT_PATH}${OUTPUT_BASE_NAME}.rtf"
 echo "RTF généré : ${OUTPUT_PATH}${OUTPUT_BASE_NAME}.rtf"
 
 echo "Conversion terminée. Les fichiers sont dans : $OUTPUT_PATH"

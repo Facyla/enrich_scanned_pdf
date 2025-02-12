@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """
 Script permettant de convertir un PDF textuel en Markdown et de sauvegarder les médias associés.
 Ce script ne nécessite pas d'OCR car il fonctionne uniquement avec les PDF contenant du texte.
