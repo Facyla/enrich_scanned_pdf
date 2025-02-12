@@ -12,6 +12,7 @@ declare -A commands_and_packages=(
   ["pdftoppm"]="poppler-utils"
   ["pdftotext"]="poppler-utils"
   ["ocrmypdf"]="ocrmypdf"
+  ["pandoc"]="pandoc"
 )
 
 # Variables to store the missing commands and install commands

@@ -22,11 +22,20 @@ fi
 
 #!/bin/bash
 
-echo "METADONNEES : "
+echo "Informations de base : "
+meta_output=$(pdfinfo "$PDF_FILE_PATH" 2>&1)
+meta_status=$?
+echo "$meta_output"
+if [ $meta_status -eq 0 ] && [ -n "$meta_output" ]; then
+    echo "✅ Métadonnées trouvées."
+else
+    echo "❌ Aucune métadonnée trouvée."
+fi
+
+echo "METADONNEES : XML (de type XMP) "
 meta_output=$(pdfinfo -meta "$PDF_FILE_PATH" 2>&1)
 meta_status=$?
 echo "$meta_output"
-
 if [ $meta_status -eq 0 ] && [ -n "$meta_output" ]; then
     echo "✅ Métadonnées trouvées."
 else
@@ -38,7 +47,6 @@ echo "STRUCTURE (seule) : "
 struct_output=$(pdfinfo -struct "$PDF_FILE_PATH" 2>&1)
 struct_status=$?
 echo "$struct_output"
-
 if [ $struct_status -eq 0 ] && [ -n "$struct_output" ]; then
     echo "✅ Structure trouvée."
 else
@@ -50,7 +58,6 @@ echo "Structure et texte : "
 struct_text_output=$(pdfinfo -struct-text "$PDF_FILE_PATH" 2>&1)
 struct_text_status=$?
 echo "$struct_text_output"
-
 if [ $struct_text_status -eq 0 ] && [ -n "$struct_text_output" ]; then
     echo "✅ Structure et texte trouvés."
 else

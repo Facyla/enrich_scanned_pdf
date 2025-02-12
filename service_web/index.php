@@ -136,6 +136,13 @@ if (isset($_REQUEST['module_abstract']) && !empty($_REQUEST['module_abstract']))
 	if (!empty($module_abstract) && $module_abstract != 'no') { $module_abstract = 'yes'; } else { $module_abstract = 'no'; }
 }
 
+// Export in multiple formats
+$module_export = 'yes';
+if (isset($_REQUEST['module_export']) && !empty($_REQUEST['module_export'])) {
+	$module_export = strip_tags($_REQUEST['module_export']);
+	if (!empty($module_export) && $module_export != 'no') { $module_export = 'yes'; } else { $module_export = 'no'; }
+}
+
 
 
 
@@ -359,6 +366,12 @@ $html_form .= '<div><label>' . "Analyse niveau d'accessibilité du document sour
 	<option value="yes">Oui</option>
 	</select></label></div>';
 
+	$html_form .= '<div><label>' . "Exporter dans divers formats nureaituqes (opérationnel) " . '<select type="text" name="module_export" id="module_export" value="' . $module_export . '">
+	<option value="yes">Oui</option>
+	<option value="no">Non</option>
+	</select></label></div>';
+
+
 $html_form .= '</fieldset>';	
 
 $html_form .= '<div class="clear-flex"></div>';
@@ -415,7 +428,7 @@ if ($action) {
 		);
 		$return = accessible_documents_proc_open($command);
 		if ($return['return_code'] === 0) {
-			$module_audit_html .= '<pre>' . $return['stdout'] . '</pre>';
+			$module_audit_html .= '<pre>' . htmlentities($return['stdout']) . '</pre>';
 		} else {
 			$module_audit_html .= '<pre>' . print_r($return, true) . '</pre>';
 		}
@@ -594,6 +607,27 @@ if ($action) {
 		*/
 	}
 
+	// Génération d'un résumé
+	if ($module_export == 'yes') {
+		$generation_log .= "Module activé : Export<br />";
+		$command = sprintf(
+			'bash %s %s %s',
+			$path_scripts . 'module_export.sh',
+			escapeshellarg($inputFile_path),
+			escapeshellarg($source_hash),
+		);
+
+		//$module_abstract_html .= accessible_documents_proc_open_return($command);
+		$return = accessible_documents_proc_open($command);
+		if ($return['return_code'] === 0) {
+			$module_abstract_html .= '<pre>' . $return['stdout'] . '</pre>';
+		} else {
+			$module_abstract_html .= '<pre>' . print_r($return, true) . '</pre>';
+		}
+			/*
+		*/
+	}
+
 
 	// @TODO à mieux structurer et mettre en forme
 	// Ajout des résultats à la page
@@ -628,6 +662,11 @@ if ($action) {
 	if (!empty($module_abstract_html)) {	
 		$html .= '<h3>Résultat du module : Résumé</h3>';
 		$html .= $module_abstract_html;
+	}
+
+	if (!empty($module_export_html)) {	
+		$html .= '<h3>Résultat du module : Exports</h3>';
+		$html .= $module_export_html;
 	}
 }
 
