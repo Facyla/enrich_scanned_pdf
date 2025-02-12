@@ -1,24 +1,30 @@
 
-body { font-family: Arial; }
+body { font-family: Arial; max-width: 70vw; margin: 1rem auto; }
 
 pre { padding: .25rem .5rem; color: white; background: black; }
 code { padding: 0 .25rem; color: white; background: black; }
 
-form#enrich-pdf { border: 1px solid black; background: #DFD; padding: .5rem 1rem; display: flex; flex-wrap: wrap; grid-gap: 1rem; }
+form#enrich-pdf { border: 1px solid black; background: #DFD; padding: .5rem 1rem; display: flex; flex-wrap: wrap; grid-gap: 1rem; max-width: 100%; }
 #enrich-pdf p { margin: .5rem 0 .5rem 0; }
-#enrich-pdf > div, #enrich-pdf > fieldset { display: inline-block; flex: 0 1 calc(100% / 3 - 2rem - 3 * 3px); margin: 0; padding: .5rem; border: 1px solid #000; font-size: 1.2rem; }
+#enrich-pdf > div, #enrich-pdf > fieldset { display: inline-block; flex: 1 1 calc(100% / 3 - 2rem - 3 * 3px); margin: 0; padding: .5rem; border: 1px solid #000; font-size: 1.2rem; max-width: calc(100vw - 4rem); }
 #enrich-pdf fieldset > legend { border: 1px solid; background: white; font-weight: bold; }
 #enrich-pdf > fieldset > div , #enrich-pdf > fieldset > label { margin: 0 0 2rem 0; background: #FFFC; }
 
-#enrich-pdf input { min-width: 20rem; }
+#enrich-pdf input { min-width: 12rem; }
 #enrich-pdf select {  }
 #enrich-pdf input[type="checkbox"], #enrich-pdf input[type="radio"] { min-width: initial; }
 #enrich-pdf input[type="file"] { display: inline-block; border: 3px dashed #333; margin: 1rem; padding: 1rem; background: #EAEAEA; width: calc(100% - 4rem); min-height: 5rem; }
 
 #enrich-pdf .clear-flex { border: 0; margin: 0; padding: 0; display: block; flex: 0 0 100%; }
 
-#enrich-pdf button { background: green; border: 3px outset green; border-radius: .5rem; color: white; font-weight: bold; padding: .5rem 1rem; font-size: 1.5rem; }
+#enrich-pdf button { background: green; border: 3px outset green; border-radius: .5rem; color: white; font-weight: bold; padding: .5rem 1rem; font-size: 1.5rem; max-width: 90%; }
 #enrich-pdf button:hover { border-style: inset; }
 
 .link-download { border: 1px solid darkred; background: #C42D43; color: white; font-weight: bold; text-decoration: none; border-radius: .25rem; padding: .5rem 1rem; }
 
+
+
+
+@media screen and (max-width: 50rem) {
+	body { max-width: 90vw; margin: 1rem auto; }
+}
