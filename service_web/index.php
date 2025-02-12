@@ -331,12 +331,7 @@ $html_form .= '</fieldset>';
 
 $html_form .= '<fieldset><legend>Choix des opérations à effectuer sur ce document</legend>';
 
-	$html_form .= '<div><label>' . "Extraire le texte (opérationnel) " . '<select type="text" name="module_ocr" id="module_ocr" value="' . $module_ocr . '">
-	<option value="yes">Oui</option>
-	<option value="no">Non</option>
-	</select></label></div>';
-
-	$html_form .= '<div><label>' . "Exporter dans divers formats bureautiques (opérationnel) " . '<select type="text" name="module_export" id="module_export" value="' . $module_export . '">
+	$html_form .= '<div><label>' . "Extraire le texte d'un PDF image (opérationnel) " . '<select type="text" name="module_ocr" id="module_ocr" value="' . $module_ocr . '">
 	<option value="yes">Oui</option>
 	<option value="no">Non</option>
 	</select></label></div>';
@@ -346,11 +341,16 @@ $html_form .= '<fieldset><legend>Choix des opérations à effectuer sur ce docum
 	<option value="no">Non</option>
 	</select></label></div>';
 
-	$html_form .= '<div><label>Reconstruire du texte structuré (à venir) <select type="text" name="module_struct_text" id="module_struct_text" value="' . $module_struct_text . '">
+	$html_form .= '<div><label>Reconstruire du texte structuré (en cours) <select type="text" name="module_struct_text" id="module_struct_text" value="' . $module_struct_text . '">
 	<option value="yes">Oui</option>
 	<option value="no">Non</option>
 	</select></label></div>';
 	
+	$html_form .= '<div><label>' . "Exporter dans divers formats bureautiques (en cours intégration) " . '<select type="text" name="module_export" id="module_export" value="' . $module_export . '">
+	<option value="no">Non</option>
+	<option value="yes">Oui</option>
+	</select></label></div>';
+
 	$html_form .= '<div><label>' . "Extraire les données d'un tableau (à venir) " . '<select type="text" name="module_table" id="module_table" value="' . $module_table . '">
 	<option value="no">Non</option>
 	<option value="yes">Oui</option>
@@ -506,24 +506,32 @@ if ($action) {
 
 	}
 	
-	if ($module_table == 'yes') {
+	if ($module_struct_text == 'yes') {
+		$module_struct_text_html = '';
 		$generation_log .= "Module activé : Texte structuré<br />";
-
-		/*
 		$command = sprintf(
-			'bash %s %s',
-			$path_scripts . 'module_struct_text.sh',
+			'bash %s %s %s',
+			$path_scripts . 'module_structured_text.sh',
 			escapeshellarg($inputFile_path),
+			escapeshellarg($source_hash),
 		);
 
 		//$module_struct_text_html .= accessible_documents_proc_open_return($command);
 		$return = accessible_documents_proc_open($command);
 		if ($return['return_code'] === 0) {
 			$module_struct_text_html .= '<pre>' . $return['stdout'] . '</pre>';
+
+			// @TODO DL du fichier MD généré + des autres formats
+			/*
+			$generated_file_name = basename($result['enriched_pdf_path']);
+			$encodedFileName = urlencode(base64_encode($generated_file_name));
+			
+			$module_ocr_html .= 'Fichier PDF avec alternative textuelle généré&nbsp;: ';
+			$module_ocr_html .= '<a class="link-download" href="?serve_file=' . $encodedFileName . '" target="_blank">Télécharger le fichier ' . $generated_file_name . '</a>';
+			*/
 		} else {
 			$module_struct_text_html .= '<pre>' . print_r($return, true) . '</pre>';
 		}
-		*/
 	}
 
 	// Extraction des tableaux
@@ -642,6 +650,11 @@ if ($action) {
 	if (!empty($module_ocr_html)) {
 		$html .= '<h3>Résultat du module : OCR</h3>';
 		$html .= $module_ocr_html;
+	}
+
+	if (!empty($module_struct_text_html)) {
+		$html .= '<h3>Résultat du module : Structuration et Exports multi-formats</h3>';
+		$html .= $module_struct_text_html;
 	}
 
 	if (!empty($module_image_html)) {
