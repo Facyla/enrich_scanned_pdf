@@ -19,15 +19,14 @@ import re
 import hashlib
 from image_description import get_image_description
 
-def ensure_hash_directory(hash_value):
-    """Create directory structure for hash if it doesn't exist"""
-    dir_path = f'service_web/_data/{hash_value}'
-    os.makedirs(dir_path, exist_ok=True)
-    return dir_path
+def ensure_directory(path):
+    """Create directory if it doesn't exist"""
+    os.makedirs(path, exist_ok=True)
+    return path
 
-def process_image_references(text, hash_value):
+def process_image_references(text, hash_value, temp_dir):
     """Replace image references with their descriptions and update image paths"""
-    img_pattern = r'!\[(.*?)\]\((text based pdf/output/[^)]+)\)'
+    img_pattern = fr'!\[(.*?)\]\(({re.escape(temp_dir)}/[^)]+)\)'
     
     def replace_with_description(match):
         description = match.group(1)
@@ -53,9 +52,11 @@ def process_image_references(text, hash_value):
 def process_pdf(input_file, hash_value):
     print(f"\n[DEBUG] Starting PDF processing: {input_file}")
     
-    # Create directory for provided hash
-    hash_dir = ensure_hash_directory(hash_value)
+    # Create directories
+    hash_dir = ensure_directory(f'service_web/_data/{hash_value}')
+    temp_dir = ensure_directory('service_web/_data/temp')
     print(f"[DEBUG] Using hash directory: {hash_dir}")
+    print(f"[DEBUG] Using temp directory: {temp_dir}")
     
     # Get the PDF filename without extension
     base_name = os.path.splitext(os.path.basename(input_file))[0]
@@ -65,7 +66,7 @@ def process_pdf(input_file, hash_value):
     md_text = pymupdf4llm.to_markdown(
         input_file, 
         write_images=True, 
-        image_path="text based pdf/output",  # Temporary location
+        image_path=temp_dir,  # Use temp directory for initial image storage
         page_chunks=True
     )
     
@@ -74,7 +75,7 @@ def process_pdf(input_file, hash_value):
     for item in md_text:
         if isinstance(item, dict) and 'text' in item:
             # Process and move images to hash directory
-            page_text = process_image_references(item['text'], hash_value)
+            page_text = process_image_references(item['text'], hash_value, temp_dir)
             full_markdown += page_text + "\n\n"
     
     # Write the markdown file
@@ -82,6 +83,11 @@ def process_pdf(input_file, hash_value):
     with open(output_file, 'w+', encoding='utf-8') as f:
         f.write(full_markdown.strip())
     print(f"[DEBUG] Successfully saved markdown file")
+    
+    # Clean up temp directory
+    if os.path.exists(temp_dir):
+        import shutil
+        shutil.rmtree(temp_dir)
     
     return hash_value
 
