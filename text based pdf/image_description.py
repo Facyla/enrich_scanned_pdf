@@ -16,25 +16,35 @@ def encode_image(image_path):
         return None
 
 def sanitize_json_string(text):
-    """Clean the text to ensure valid JSON"""
-    # Remove any control characters
-    text = ''.join(char for char in text if ord(char) >= 32 or char in '\n\r\t')
-    # Remove any markdown code block markers
+    """Clean the text to ensure valid JSON and extract lists/tables"""
+    # Remove markdown code blocks
     text = re.sub(r'```json\s*|\s*```', '', text)
     
-    # Fix multiline strings by escaping newlines and quotes
-    def fix_multiline(match):
-        content = match.group(1)
-        # Escape newlines and quotes, preserve intended newlines
-        content = content.replace('\n', '\\n').replace('"', '\\"')
-        return f'"{content}"'
+    # Parse the text to extract components
+    try:
+        data = json.loads(text)
+        
+        # Extract and remove lists and tables
+        lists = data.pop('listes', '')
+        tables = data.pop('tableaux', '')
+        
+        # Convert back to clean JSON string
+        clean_json = json.dumps(data)
+        
+        return clean_json, lists.strip(), tables.strip()
+    except json.JSONDecodeError:
+        print("Error in initial JSON parsing")
+        return None, None, None
+
+def extract_markdown_content(text):
+    """Extract lists and tables from the response text"""
+    # Find markdown lists (lines starting with - or *)
+    lists = '\n'.join(re.findall(r'^[\s]*[-*].*$', text, re.MULTILINE)).strip()
     
-    # Find and fix multiline strings between triple quotes
-    text = re.sub(r'"""(.*?)"""', fix_multiline, text, flags=re.DOTALL)
+    # Find markdown tables (lines containing |)
+    tables = '\n'.join(re.findall(r'^.*\|.*$', text, re.MULTILINE)).strip()
     
-    # Clean up any extra whitespace
-    text = text.strip()
-    return text
+    return lists, tables
 
 def get_image_description(image_path, api_key="P7xBuh2o09ir5b7tTcOY1xKN8ameLul8", model="pixtral-12b-2409"):
     """
@@ -46,59 +56,14 @@ def get_image_description(image_path, api_key="P7xBuh2o09ir5b7tTcOY1xKN8ameLul8"
         model (str): Model to use for image analysis
     
     Returns:
-        str: JSON-formatted description of the image
+        tuple: (json_data: dict, lists: str, tables: str)
     """
     base64_image = encode_image(image_path)
     if base64_image is None:
-        return None
+        return None, None, None
 
     client = Mistral(api_key=api_key)
     
-    # messages = [
-    #     {
-    #         "role": "user",
-    #         "content": [
-    #             {
-    #                 "type": "text",
-    #                 "text": """
-    #                 Décris cette image en français pour une personne aveugle ou malvoyante, en suivant les standards RGAA et WCAG 2.1 AA.
-    #                 Structure ta réponse en JSON ainsi :
-    #                 {
-    #                     "type_image": "Type d'image (photo, graphique, tableau, schéma, etc.) et objectif principal.",
-    #                     "elements_visuels": {
-    #                         "sujets_principaux": "Sujets/objets principaux (position, taille, relations spatiales).",
-    #                         "texte_integral": "Texte intégral présent dans l'image (transcrit mot à mot, si pertinent), si applicable. ",
-    #                         "couleurs_significatives": "Couleurs significatives (ex: 'ligne rouge représentant les ventes'), si applicable.",
-    #                         "elements_contextuels": "Éléments contextuels (lieu, ambiance, source si pertinente), si applicable."
-    #                     },
-    #                     "interpretation_donnees": "Tendances, comparaisons, chiffres clés (si graphique/tableau). Éviter les métaphores visuelles.",
-    #                     "listes": "Liste retranscrite en Markdown, si applicable.",
-    #                     "tableaux": "Tableau retranscrit en Markdown, si applicable."
-    #                 }
-
-    #                 Exemple pour un graphique :
-    #                 {
-    #                     "type_image": "Graphique en barres intitulé 'Ventes trimestrielles 2024'.",
-    #                     "elements_visuels": {
-    #                         "sujets_principaux": "Axe X : trimestres (Q1 à Q4). Axe Y : chiffre d'affaires en millions d'euros.",
-    #                         "texte_integral": "",
-    #                         "couleurs_significatives": "",
-    #                         "elements_contextuels": "Source : Rapport financier DGAC."
-    #                     },
-    #                     "interpretation_donnees": "Barre Q1 : 2M€, Q2 : 4M€, Q3 : 3.5M€, Q4 : 5M€.",
-    #                     "listes": "",
-    #                     "tableaux": "| Trimestre | Ventes (M€) |\n|-----------|-------------|\n| Q1        | 2           |\n| Q2        | 4           |\n| Q3        | 3.5         |\n| Q4        | 5           |"
-    #                 }
-    #                 """
-    #             },
-    #             {
-    #                 "type": "image_url",
-    #                 "image_url": f"data:image/jpeg;base64,{base64_image}"
-    #             }
-    #         ]
-    #     }
-    # ]
-
     messages = [
         {
             "role": "user",
@@ -107,7 +72,8 @@ def get_image_description(image_path, api_key="P7xBuh2o09ir5b7tTcOY1xKN8ameLul8"
                     "type": "text",
                     "text": """
                     Décris cette image en français pour une personne aveugle ou malvoyante, en suivant les standards RGAA et WCAG 2.1 AA.
-                    Structure ta réponse en JSON ainsi :
+                    Structure ta réponse avec :
+                    1. Un JSON contenant :
                     {
                         "type_image": "Type d'image (photo, graphique, tableau, schéma, etc.) et objectif principal.",
                         "elements_visuels": {
@@ -119,7 +85,10 @@ def get_image_description(image_path, api_key="P7xBuh2o09ir5b7tTcOY1xKN8ameLul8"
                         "interpretation_donnees": "Tendances, comparaisons, chiffres clés (si graphique/tableau). Éviter les métaphores visuelles."
                     }
 
-                    Exemple pour un graphique :
+                    2. Si applicable, une liste en Markdown (avec - ou *) des éléments importants.
+                    3. Si applicable, un tableau en Markdown pour les données tabulaires.
+
+                    Exemple :
                     {
                         "type_image": "Graphique en barres intitulé 'Ventes trimestrielles 2024'.",
                         "elements_visuels": {
@@ -130,6 +99,18 @@ def get_image_description(image_path, api_key="P7xBuh2o09ir5b7tTcOY1xKN8ameLul8"
                         },
                         "interpretation_donnees": "Barre Q1 : 2M€, Q2 : 4M€, Q3 : 3.5M€, Q4 : 5M€."
                     }
+
+                    - Q1 2024 : 2M€
+                    - Q2 2024 : 4M€
+                    - Q3 2024 : 3.5M€
+                    - Q4 2024 : 5M€
+
+                    | Trimestre | Ventes (M€) |
+                    |-----------|-------------|
+                    | Q1 2024   | 2           |
+                    | Q2 2024   | 4           |
+                    | Q3 2024   | 3.5         |
+                    | Q4 2024   | 5           |
                     """
                 },
                 {
@@ -139,6 +120,7 @@ def get_image_description(image_path, api_key="P7xBuh2o09ir5b7tTcOY1xKN8ameLul8"
             ]
         }
     ]
+
     chat_response = client.chat.complete(
         model=model,
         messages=messages
@@ -146,12 +128,18 @@ def get_image_description(image_path, api_key="P7xBuh2o09ir5b7tTcOY1xKN8ameLul8"
     
     try:
         response_text = chat_response.choices[0].message.content
-        clean_text = sanitize_json_string(response_text)
-        return json.loads(clean_text)
-    except json.JSONDecodeError as e:
-        print(f"Error parsing JSON response: {e}")
-        print("Raw response:", response_text)  # For debugging
-        return None
+        # Extract JSON part (first { to last })
+        json_text = re.search(r'({.*})', response_text, re.DOTALL).group(1)
+        json_data = json.loads(json_text)
+        
+        # Extract markdown content
+        lists, tables = extract_markdown_content(response_text)
+        
+        return json_data, lists, tables
+    except Exception as e:
+        print(f"Error processing response: {e}")
+        print("Raw response:", response_text)
+        return None, None, None
 
 def main():
     if len(sys.argv) != 2:
@@ -159,10 +147,17 @@ def main():
         sys.exit(1)
 
     image_path = sys.argv[1]
-    description = get_image_description(image_path)
-    if description:
-        # Pretty print the JSON for console output
-        print(json.dumps(description, ensure_ascii=False, indent=2))
+    json_data, lists, tables = get_image_description(image_path)
+    
+    if json_data:
+        print("\n=== JSON DATA ===")
+        print(json.dumps(json_data, ensure_ascii=False, indent=2))
+        if lists:
+            print("\n=== LISTS ===")
+            print(lists)
+        if tables:
+            print("\n=== TABLES ===")
+            print(tables)
 
 if __name__ == "__main__":
     main()
