@@ -34,7 +34,10 @@ def process_image_references(text, hash_value, temp_dir):
         
         # Get image filename and create new path
         img_filename = os.path.basename(old_path)
-        new_path = f'service_web/_data/{hash_value}/{img_filename}'
+        new_path = os.path.join('service_web', '_data', 'output', hash_value, img_filename)
+        
+        # Ensure output directory exists
+        ensure_directory(os.path.dirname(new_path))
         
         # Move the image to the new location
         if os.path.exists(old_path):
@@ -53,14 +56,14 @@ def process_pdf(input_file, hash_value):
     print(f"\n[DEBUG] Starting PDF processing: {input_file}")
     
     # Create directories
-    hash_dir = ensure_directory(f'service_web/_data/{hash_value}')
-    temp_dir = ensure_directory('service_web/_data/temp')
-    print(f"[DEBUG] Using hash directory: {hash_dir}")
+    output_dir = ensure_directory(os.path.join('service_web', '_data', 'output', hash_value))
+    temp_dir = ensure_directory(os.path.join('service_web', '_data', 'temp'))
+    print(f"[DEBUG] Using output directory: {output_dir}")
     print(f"[DEBUG] Using temp directory: {temp_dir}")
     
     # Get the PDF filename without extension
     base_name = os.path.splitext(os.path.basename(input_file))[0]
-    output_file = f'{hash_dir}/{base_name}.md'
+    output_file = os.path.join(output_dir, f"{base_name}.md")
     
     # Convert PDF to markdown
     md_text = pymupdf4llm.to_markdown(
