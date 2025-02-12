@@ -397,7 +397,7 @@ if ($action) {
 			$inputFile_path = $can_process;
 			$inputFile = basename($inputFile_path);
 			// Generate output file name and path
-			$outputFile = str_replace('.pdf', '_PDFUA.pdf', $inputFile);
+			$outputFile = str_replace(['.pdf', '.PDF'], '_PDFUA.pdf', $inputFile);
 			$outputFile_path = $baseDir . '_data/source/' . $outputFile;
 			$can_process = true;
 		}
@@ -632,8 +632,20 @@ if ($action) {
 		} else {
 			$module_abstract_html .= '<pre>' . print_r($return, true) . '</pre>';
 		}
-			/*
-		*/
+
+			// @TODO DL du fichier MD généré + des autres formats
+			$extensions = ['md', 'html', 'csv', 'doccx', 'json', 'odt', 'rtf', 'xml'];
+			foreach($extensions as $extension) {
+				// New paths
+				$outputFile_path = str_replace('_data/source/', '_data/output/' . $source_hash, $inputFile_path);
+				$outputFile_path = str_replace(['.pdf', '.PDF'], $extension, $outputFile_path);
+
+				$generated_file_name = basename($outputFile_path);
+				$encodedFileName = urlencode(base64_encode($generated_file_name));
+				
+				//$module_abstract_html .= 'Fichier ".' . $extension . '" généré&nbsp;: ';
+				$module_abstract_html .= '<a class="link-download" href="?serve_file=' . $encodedFileName . '" target="_blank">Télécharger le fichier ' . $generated_file_name . '.' . $extension . '</a>';
+			}
 	}
 
 
