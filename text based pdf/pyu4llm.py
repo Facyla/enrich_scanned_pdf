@@ -12,11 +12,11 @@ class CustomJSONEncoder(json.JSONEncoder):
         return super().default(obj)
 
 def process_pdf(input_file):
-    md_text = pymupdf4llm.to_markdown(input_file, write_images=True, image_path="output", page_chunks=True)
+    md_text = pymupdf4llm.to_markdown(input_file, write_images=True, image_path="text based pdf/output", page_chunks=True)
     for i, item in enumerate(md_text):
         json_str = json.dumps(item, cls=CustomJSONEncoder, indent=2)
 
-        with open(f'output/output_page_{i+1}.json', 'w+') as f:
+        with open(f'text based pdf/output/output_page_{i+1}.json', 'w+') as f:
             f.write(json_str)
         print(f"Saved output_page_{i+1}.json")
 
