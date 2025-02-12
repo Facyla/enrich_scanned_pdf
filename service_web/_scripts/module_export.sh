@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Objectif : conversion et export
+# Objectif : conversion et export PDF to MarkDown
 
 
 # Variables
@@ -17,7 +17,6 @@ if [[ ! -f "$PDF_FILE_PATH" ]]; then
   echo "Erreur : Le fichier PDF spécifié n'existe pas : $PDF_FILE_PATH"
   exit 1
 fi
-
 
 echo "TRAITEMENT du fichier $PDF_FILE_PATH"
 
@@ -36,8 +35,8 @@ echo " - Base path: $BASE_PATH"
 DATA_PATH=$(dirname "$BASE_PATH")
 echo " - Data path : $DATA_PATH"
 # Add "output/dir/" to the path
-#OUTPUT_PATH="$DATA_PATH/output/${HASH_ID:-$SOURCE_BASE_NAME}/"
-OUTPUT_PATH="$DATA_PATH/output/"
+OUTPUT_PATH="$DATA_PATH/output/${HASH_ID:-$SOURCE_BASE_NAME}/"
+#OUTPUT_PATH="$DATA_PATH/output/"
 echo " - Output path : $OUTPUT_PATH"
 
 # Check if the folder exists, if not, create it
@@ -53,7 +52,6 @@ echo "Conversion de $PDF_FILE_PATH dans plusieurs formats :"
 echo "Les fichiers générés seront dans : $OUTPUT_PATH"
 
 # 1. HTML
-//echo "pandoc \"$PDF_FILE_PATH\" -o \"${OUTPUT_PATH}${OUTPUT_BASE_NAME}.html\" && echo \"HTML généré : ${OUTPUT_PATH}${OUTPUT_BASE_NAME}.html\""
 pandoc "$PDF_FILE_PATH" -o "${OUTPUT_PATH}${OUTPUT_BASE_NAME}.html"
 echo "HTML généré : ${OUTPUT_PATH}${OUTPUT_BASE_NAME}.html"
 
