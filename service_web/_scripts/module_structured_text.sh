@@ -37,8 +37,8 @@ echo ""
 #source /env/bin/activate
 
 #python3 "$PDF_FILE_PATH" "$HASH_ID"
-echo "commande : python3 \"$SCRIPT_DIR/module_structured_text.py\" \"$PDF_FILE_PATH\" \"$HASH_ID\""
-python_return=$(python3 "$SCRIPT_DIR/module_structured_text.py" "$PDF_FILE_PATH" "$HASH_ID")
+echo "commande : python3 \"$SCRIPT_DIR/pyu4llm.py\" \"$PDF_FILE_PATH\" \"$HASH_ID\""
+python_return=$(python3 "$SCRIPT_DIR/pyu4llm.py" "$PDF_FILE_PATH" "$HASH_ID")
 echo "Retour de la commande python : "
 echo "$python_return"
 exit

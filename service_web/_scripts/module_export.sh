@@ -34,10 +34,10 @@ else
   ls -alh
 fi
 echo ""
-source "./env/bin/activate"
+#source "./env/bin/activate"
 
-#python3 "$PDF_FILE_PATH" "$HASH_ID"
-python_return=$(python3 "$PDF_FILE_PATH" "$HASH_ID")
+echo "commande : python3 \"$SCRIPT_DIR/parser.py\" \"$PDF_FILE_PATH\" \"$HASH_ID\""
+python_return=$(python3 "parser.py" "$PDF_FILE_PATH" "$HASH_ID")
 echo "Retour de la commande python : "
 echo "$python_return"
 exit
