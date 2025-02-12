@@ -83,7 +83,21 @@ class DocumentParser:
         # Ajouter l'image en base64 directement dans le markdown
         if image_info['image_b64']:
             json_data, lists, tables = get_image_description_from_base64(image_info['image_b64'])
-            print(json_data)
+            if json_data:
+                block.append("#### Description détaillée")
+                block.append(f"**Type d'image**: {json_data['type_image']}")
+                block.append("")
+                block.append("**Éléments visuels**:")
+                block.append(f"- Sujets principaux: {json_data['elements_visuels']['sujets_principaux']}")
+                if json_data['elements_visuels']['texte_integral']:
+                    block.append(f"- Texte intégral: {json_data['elements_visuels']['texte_integral']}")
+                if json_data['elements_visuels']['couleurs_significatives']:
+                    block.append(f"- Couleurs significatives: {json_data['elements_visuels']['couleurs_significatives']}")
+                if json_data['elements_visuels']['elements_contextuels']:
+                    block.append(f"- Éléments contextuels: {json_data['elements_visuels']['elements_contextuels']}")
+                block.append("")
+                block.append(f"**Interprétation**: {json_data['interpretation_donnees']}")
+                block.append("")
             block.append(f"![Image {image_info['index']}](data:image/png;base64,{image_info['image_b64']})")
         else:
             block.append(f"![Image {image_info['index']}]()")
@@ -91,7 +105,6 @@ class DocumentParser:
         block.append("")
         
         # Informations détaillées
-        block.append("#### Métadonnées")
         # block.append(f"- **Position dans la page**: {image_info['position']}")
         
         # if image_info['captions']:
@@ -148,24 +161,20 @@ def parse_document(pdf_path, llm_processor=None):
 
 # Exemple d'utilisation
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser(description='Parse PDF and extract images with descriptions')
     parser.add_argument('input_pdf', type=str, help='Path to input PDF file')
     parser.add_argument('output_dir', type=str, help='Output directory path')
     
     args = parser.parse_args()
     
-    class DummyLLMProcessor:
-        def describe_image(self, image_b64):
-            return "Description de test par le LLM"
+    # Get input PDF filename without extension
+    input_filename = Path(args.input_pdf).stem
+    enriched_content = parse_document(args.input_pdf)
     
-    llm = DummyLLMProcessor()
-    enriched_content = parse_document(args.input_pdf, llm)
-    
-    # Create output path
+    # Create output path using input filename
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
-    output_path = output_dir / "output.md"
+    output_path = output_dir / f"{input_filename}.md"
     
     # Save result
     output_path.write_text(enriched_content, encoding='utf-8')
