@@ -37,7 +37,7 @@ echo ""
 #source "./env/bin/activate"
 
 echo "commande : python3 \"$SCRIPT_DIR/parser.py\" \"$PDF_FILE_PATH\" \"$HASH_ID\""
-python_return=$(python3 "parser.py" "$PDF_FILE_PATH" "$HASH_ID")
+python_return=$(python3 "$SCRIPT_DIR/parser.py" "$PDF_FILE_PATH" "../data/_output/$HASH_ID")
 echo "Retour de la commande python : "
 echo "$python_return"
 exit

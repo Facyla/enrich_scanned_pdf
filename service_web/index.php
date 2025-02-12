@@ -341,14 +341,14 @@ $html_form .= '<fieldset><legend>Choix des opérations à effectuer sur ce docum
 	<option value="no">Non</option>
 	</select></label></div>';
 
-	$html_form .= '<div><label>Reconstruire du texte structuré (en cours) <select type="text" name="module_struct_text" id="module_struct_text" value="' . $module_struct_text . '">
-	<option value="yes">Oui</option>
+	$html_form .= '<div><label>' . "Reconstruire du texte structuré (en cours d'intégration)" . '<select type="text" name="module_struct_text" id="module_struct_text" value="' . $module_struct_text . '">
 	<option value="no">Non</option>
+	<option value="yes">Oui</option>
 	</select></label></div>';
 	
-	$html_form .= '<div><label>' . "Exporter dans divers formats bureautiques (en cours intégration) " . '<select type="text" name="module_export" id="module_export" value="' . $module_export . '">
-	<option value="no">Non</option>
+	$html_form .= '<div><label>' . "Exporter dans divers formats bureautiques (en cours d'intégration) " . '<select type="text" name="module_export" id="module_export" value="' . $module_export . '">
 	<option value="yes">Oui</option>
+	<option value="no">Non</option>
 	</select></label></div>';
 
 	$html_form .= '<div><label>' . "Extraire les données d'un tableau (à venir) " . '<select type="text" name="module_table" id="module_table" value="' . $module_table . '">
@@ -380,9 +380,30 @@ $html_form .= '<p><button type="submit">Envoyer le PDF et réaliser les opérati
 
 $html_form .= '</form>';
 
+
+// Fichiers démo en dur
+// @TODO DL du fichier MD généré + des autres formats
+$extensions = ['md', 'html', 'csv', 'docx', 'json', 'odt', 'rtf', 'xml'];
+//$extensions = ['md', 'html', 'csv', 'docx', 'json', 'odt', 'rtf'];
+$demo_html = '';
+$base_path = dirname(__FILE__);
+$base_demo_name = 'Extract_Arxiv';
+$demo_html .= '<p>';
+foreach($extensions as $extension) {
+	// New paths
+	$outputFile_path = $base_path . "/$base_demo_name/$base_demo_name.$extension";
+	$generated_file_name = basename($outputFile_path);
+	$encodedFileName = urlencode(base64_encode($generated_file_name));
+	
+	//$module_abstract_html .= 'Fichier ".' . $extension . '" généré&nbsp;: ';
+	$demo_html .= '<a class="link-download" href="https://start.linagora.com/EnrichPDF/demo/' . $base_demo_name . '.' . $extension . '" target="_blank">Télécharger le fichier ' . $generated_file_name . '</a>';
+}
+$demo_html .= '</p>';
+
 // Ajout au HTML global
 $html .= $html_form;
-
+$html .= '<h2>' . "Exemples de fichiers générés à partir d'un PDF image : \"Docling Technical Report\"" . '</h2>';
+$html .= $demo_html;
 
 
 /* Traitement du PDF : application des séries de manipulation et génération de sorties utiles */

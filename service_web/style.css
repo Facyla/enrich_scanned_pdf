@@ -20,7 +20,7 @@ form#enrich-pdf { border: 1px solid black; background: #DFD; padding: .5rem 1rem
 #enrich-pdf button { background: green; border: 3px outset green; border-radius: .5rem; color: white; font-weight: bold; padding: .5rem 1rem; font-size: 1.5rem; max-width: 90%; }
 #enrich-pdf button:hover { border-style: inset; }
 
-.link-download { border: 1px solid darkred; background: #C42D43; color: white; font-weight: bold; text-decoration: none; border-radius: .25rem; padding: .5rem 1rem; }
+.link-download { display: inline-block; border: 1px solid darkred; background: #C42D43; color: white; font-weight: bold; text-decoration: none; border-radius: .25rem; padding: .5rem 1rem; margin: 0 1rem .25rem 0; }
 
 
 
