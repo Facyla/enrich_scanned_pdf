@@ -1,10 +1,23 @@
+
+"""
+Script permettant de convertir un PDF textuel en Markdown et de sauvegarder les médias associés.
+Ce script ne nécessite pas d'OCR car il fonctionne uniquement avec les PDF contenant du texte.
+
+Usage:
+    python pyu4llm.py <chemin_du_fichier_pdf>
+
+Le script va :
+- Convertir le contenu du PDF en Markdown
+- Extraire et sauvegarder les images dans le dossier 'output'
+- Générer un fichier JSON par page dans le dossier 'output'
+"""
+
 import pymupdf4llm
 import pymupdf
 import pprint
 import json
 import sys
 
-#handle Rect objects
 class CustomJSONEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, pymupdf.Rect):
