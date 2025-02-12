@@ -6,6 +6,7 @@
 # Variables
 ## input file path
 PDF_FILE_PATH="$1"
+HASH_ID="$2"
 # LANGUAGE="${2:-fra}"  # Si aucune langue n'est fournie, utiliser 'fra' par défaut
 
 # Current folder : FOLDER_PATH=$(dirname "$file_path")
@@ -15,6 +16,10 @@ if [[ ! -f "$PDF_FILE_PATH" ]]; then
   echo "Erreur : Le fichier PDF spécifié n'existe pas : $PDF_FILE_PATH"
   exit 1
 fi
+
+
+python3 FILE_PATH.pdf => MD
+// Génère 1 fichier MD
 
 
 echo "TRAITEMENT du fichier $PDF_FILE_PATH"
@@ -27,5 +32,3 @@ if [ $meta_status -eq 0 ] && [ -n "$meta_output" ]; then
 else
     echo "❌ Aucune sortie."
 fi
-
-

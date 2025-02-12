@@ -101,7 +101,7 @@ if (isset($_REQUEST['module_ocr']) && !empty($_REQUEST['module_ocr'])) {
 	if (!empty($module_ocr) && $module_ocr != 'no') { $module_ocr = 'yes'; } else { $module_ocr = 'no'; }
 }
 
-// Add structured text
+// Add structured text + export
 $module_struct_text = 'yes';
 if (isset($_REQUEST['module_struct_text']) && !empty($_REQUEST['module_struct_text'])) {
 	$module_struct_text = strip_tags($_REQUEST['module_struct_text']);
@@ -136,7 +136,7 @@ if (isset($_REQUEST['module_abstract']) && !empty($_REQUEST['module_abstract']))
 	if (!empty($module_abstract) && $module_abstract != 'no') { $module_abstract = 'yes'; } else { $module_abstract = 'no'; }
 }
 
-// Export in multiple formats
+// PDF to MarkDown + Export in multiple formats
 $module_export = 'yes';
 if (isset($_REQUEST['module_export']) && !empty($_REQUEST['module_export'])) {
 	$module_export = strip_tags($_REQUEST['module_export']);
@@ -331,12 +331,17 @@ $html_form .= '</fieldset>';
 
 $html_form .= '<fieldset><legend>Choix des opérations à effectuer sur ce document</legend>';
 
-$html_form .= '<div><label>' . "Analyse niveau d'accessibilité du document source (à venir) " . '<select type="text" name="module_audit" id="module_audit" value="' . $module_audit . '">
+	$html_form .= '<div><label>' . "Extraire le texte (opérationnel) " . '<select type="text" name="module_ocr" id="module_ocr" value="' . $module_ocr . '">
 	<option value="yes">Oui</option>
 	<option value="no">Non</option>
 	</select></label></div>';
 
-	$html_form .= '<div><label>' . "Extraire le texte (opérationnel) " . '<select type="text" name="module_ocr" id="module_ocr" value="' . $module_ocr . '">
+	$html_form .= '<div><label>' . "Exporter dans divers formats bureautiques (opérationnel) " . '<select type="text" name="module_export" id="module_export" value="' . $module_export . '">
+	<option value="yes">Oui</option>
+	<option value="no">Non</option>
+	</select></label></div>';
+
+	$html_form .= '<div><label>' . "Analyse niveau d'accessibilité du document source (prototype basique) " . '<select type="text" name="module_audit" id="module_audit" value="' . $module_audit . '">
 	<option value="yes">Oui</option>
 	<option value="no">Non</option>
 	</select></label></div>';
@@ -364,11 +369,6 @@ $html_form .= '<div><label>' . "Analyse niveau d'accessibilité du document sour
 	$html_form .= '<div><label>' . "Générer un résumé (à venir) " . '<select type="text" name="module_abstract" id="module_abstract" value="' . $module_abstract . '">
 	<option value="no">Non</option>
 	<option value="yes">Oui</option>
-	</select></label></div>';
-
-	$html_form .= '<div><label>' . "Exporter dans divers formats nureaituqes (opérationnel) " . '<select type="text" name="module_export" id="module_export" value="' . $module_export . '">
-	<option value="yes">Oui</option>
-	<option value="no">Non</option>
 	</select></label></div>';
 
 
