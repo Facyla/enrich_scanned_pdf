@@ -1,0 +1,51 @@
+{
+  "metadata": {
+    "format": "PDF 1.3",
+    "title": "",
+    "author": "",
+    "subject": "",
+    "keywords": "",
+    "creator": "",
+    "producer": "iOS Version 12.3.1 (Build 16F203) Quartz PDFContext",
+    "creationDate": "D:20190823123256Z00'00'",
+    "modDate": "D:20190823123256Z00'00'",
+    "trapped": "",
+    "encryption": null,
+    "file_path": "text based pdf/input/ComtemporaryCondensed-3MainStreet.pdf",
+    "page_count": 4,
+    "page": 1
+  },
+  "toc_items": [],
+  "tables": [],
+  "images": [
+    {
+      "number": 0,
+      "bbox": [
+        70.5308609008789,
+        714.234375,
+        219.46914672851562,
+        746.234375
+      ],
+      "transform": [
+        148.93829345703125,
+        0.0,
+        -0.0,
+        32.0,
+        70.5308609008789,
+        714.234375
+      ],
+      "width": 754,
+      "height": 162,
+      "colorspace": 3,
+      "cs-name": "ICCBased(RGB,sRGB IEC61966-2.1)",
+      "xres": 96,
+      "yres": 96,
+      "bpc": 8,
+      "size": 91505,
+      "has-mask": false
+    }
+  ],
+  "graphics": [],
+  "text": "# 3 Main Street\n\n### Extend and renovate internally and externally\n\n 2017/04/0001S\n\n Mr A Smith\n\n N/A\n\n John Doe\n\n Site Report Pro\n\n 23 Aug 2019\n\n\n-----\n\n",
+  "words": []
+}
