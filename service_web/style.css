@@ -1,7 +1,19 @@
 
-body { font-family: Arial; max-width: 70vw; margin: 1rem auto; }
+html { background: #EEF; }
+body { font-family: Arial; max-width: 70vw; margin: 1rem auto; background: #FFF; padding: .5rem 1rem 2rem 1rem; }
 
-pre { padding: .25rem .5rem; color: white; background: black; }
+*:focus-visible {
+  outline: 2px solid #f00 !important;
+  outline-offset: -3px !important;
+  box-shadow: inset 0px 0px 0 4px #fff !important;
+}
+*:focus:not(:focus-visible) {
+  outline-color: transparent !important;
+}
+
+pre { padding: .25rem .5rem; color: white; background: black; text-wrap: auto; }
+pre { max-height: 5rem; overflow: hidden; }
+pre:hover, pre:focus, pre:focus-visible { max-height: initial; max-width: initial; }
 code { padding: 0 .25rem; color: white; background: black; }
 
 form#enrich-pdf { border: 1px solid black; background: #DFD; padding: .5rem 1rem; display: flex; flex-wrap: wrap; grid-gap: 1rem; max-width: 100%; }
@@ -11,7 +23,7 @@ form#enrich-pdf { border: 1px solid black; background: #DFD; padding: .5rem 1rem
 #enrich-pdf > fieldset > div , #enrich-pdf > fieldset > label { margin: 0 0 2rem 0; background: #FFFC; }
 
 #enrich-pdf input { min-width: 12rem; }
-#enrich-pdf select {  }
+#enrich-pdf select { max-width: 90%; }
 #enrich-pdf input[type="checkbox"], #enrich-pdf input[type="radio"] { min-width: initial; }
 #enrich-pdf input[type="file"] { display: inline-block; border: 3px dashed #333; margin: 1rem; padding: 1rem; background: #EAEAEA; width: calc(100% - 4rem); min-height: 5rem; }
 

@@ -1,5 +1,9 @@
 #!/bin/bash
 
+echo "# Script d'aide à l'installation des dépendances"
+echo "Notez qu'il s'agit d'une aide, le script n'est pas complet, et adapté pour l'environnement de référence (Debian 6)"
+echo ""
+
 # List of required commands and their corresponding package names
 declare -A commands_and_packages=(
   ["cd"]="coreutils" # cd is a shell built-in, but included here for consistency
@@ -13,6 +17,7 @@ declare -A commands_and_packages=(
   ["pdftotext"]="poppler-utils"
   ["ocrmypdf"]="ocrmypdf"
   ["pandoc"]="pandoc"
+  ["libreoffice"]="libreoffice"
   ["python3"]="python3"
 )
 

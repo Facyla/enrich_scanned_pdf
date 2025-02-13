@@ -104,4 +104,6 @@ if __name__ == "__main__":
     input_file = sys.argv[1]
     hash_value = sys.argv[2]
     process_pdf(input_file, hash_value)
-    print(f"Content stored in: service_web/_data/{hash_value}")
+    output_dir = ensure_directory(os.path.join('service_web', '_data', 'output', hash_value))
+    print(f"Contenu enregitré dans : {output_dir}")
+    

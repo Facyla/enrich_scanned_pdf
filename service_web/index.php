@@ -164,7 +164,8 @@ $html .= '
 	
   <link rel="stylesheet" href="style.css">
 </head>
-<body>';
+<body>
+<main>';
 $html .= '<h2>Présentation du service</h2>';
 $html .= "<p>Ce service web s'appuie sur différents composants open source pour fournir un service d'amélioration de l'accessibilité de documents PDF.</p>";
 $html .= "<p>Il s'adresse aux utilisateurs de ces documents, et vise à pallier des manques de documents tels qu'ils sont reçus. Conçu pour rester d'un usage simple, il vous permet de charger un document PDF image, ou très peu accessible, afin d'en extraire des informations utiles pour la compréhension du contenu du document, d'enrichir le document initial avec ces données textuelles structurées, pour récupérer un fichier PDF/UA enrichi avec ces éléments.</p>";
@@ -174,7 +175,7 @@ $html .= "<p>Modulaire, il est conçu pour pouvoir permettre de réaliser diffé
 	<li>de l'extraction de texte à partir d'image (OCR), afin de pouvoir proposer une alternative textuelle,</li>
 	<li>de générer des titres et de structurer son contenu</li>
 	<li>d'ajouter des métadonnées nécessaire à un rendu correct du texte alternatif</li>
-	<li>d'identifier et d'exporter des élements kdu document : images, blocs de textes, tableaux, etc.</li>
+	<li>d'identifier et d'exporter des élements du document : images, blocs de textes, tableaux, etc.</li>
 </ul>";
 $html .= "<p>ATTENTION&nbsp;: Cette page est un prototype qui vise à valider le principe de fonctionnement de cette chaîne d'amélioration de l'accessibilité de PDF : certaines des fonctionnalités décrites peuvent être disponibles et opérationnelles, ou encore en projet.</p>";
 
@@ -189,7 +190,7 @@ $html_form .= '<form id="enrich-pdf" method="POST" enctype="multipart/form-data"
 $html_form .= '<input type="hidden" name="action" value="process" />
 	<fieldset><legend>PDF source et options</legend>	
 	
-		<div><label>Choississez un fichier PDF à traiter <input type="file" name="uploaded_file" id="file" /></label><br /><em>Faites glisser le PDF à enrichir, ou cliquez pour le choisir parmi vos fichiers.</em></div>';
+		<div><label for="uploaded_file">Choisissez un fichier PDF à traiter <input type="file" name="uploaded_file" id="file" /></label><br /><em>Faites glisser le PDF à enrichir, ou cliquez pour le choisir parmi vos fichiers.</em></div>';
 
 //$html .= '<div><label>Nom du fichier source <input type="text" name="input" placeholder="Nom_du_scan_PDF.pdf" value="' . $inputFile . '" /></label><br /><em>Si le fichier existe déjà dans le répertoire, indiquer son  (démo, envoi précédent)</em></div>
 
@@ -341,12 +342,12 @@ $html_form .= '<fieldset><legend>Choix des opérations à effectuer sur ce docum
 	<option value="no">Non</option>
 	</select></label></div>';
 
-	$html_form .= '<div><label>' . "Reconstruire du texte structuré (en cours d'intégration)" . '<select type="text" name="module_struct_text" id="module_struct_text" value="' . $module_struct_text . '">
-	<option value="no">Non</option>
+	$html_form .= '<div><label>' . "Reconstruire de données structurées à partir d'un PDF Image (opérationnel, en cours d'intégration)" . '<select type="text" name="module_struct_text" id="module_struct_text" value="' . $module_struct_text . '">
 	<option value="yes">Oui</option>
+	<option value="no">Non</option>
 	</select></label></div>';
 	
-	$html_form .= '<div><label>' . "Exporter dans divers formats bureautiques (en cours d'intégration) " . '<select type="text" name="module_export" id="module_export" value="' . $module_export . '">
+	$html_form .= '<div><label>' . "Extraire des données structurées et les Exporter dans plusieurs formats bureautiques (opérationnel, en cours d'intégration) " . '<select type="text" name="module_export" id="module_export" value="' . $module_export . '">
 	<option value="yes">Oui</option>
 	<option value="no">Non</option>
 	</select></label></div>';
@@ -441,7 +442,7 @@ if ($action) {
 
 	// Audit rapide de l'accessibilité du fichier source
 	if ($module_audit == 'yes') {
-		$generation_log .= "Module activé : audit<br />";
+		$generation_log .= "Module activé : Audit<br />";
 		$command = sprintf(
 			'bash %s %s',
 			$path_scripts . 'audit_pdf.sh',
@@ -637,8 +638,9 @@ if ($action) {
 	}
 
 	// Génération d'un résumé
+	// Paramètres : chemin complet du fichier source, hash_id
 	if ($module_export == 'yes') {
-		$generation_log .= "Module activé : Export<br />";
+		$generation_log .= "Module activé : Extraction de données structurées et Exports multi-formats<br />";
 		$command = sprintf(
 			'bash %s %s %s',
 			$path_scripts . 'module_export.sh',
@@ -646,27 +648,29 @@ if ($action) {
 			escapeshellarg($source_hash),
 		);
 
-		//$module_abstract_html .= accessible_documents_proc_open_return($command);
+		//$module_export_html .= accessible_documents_proc_open_return($command);
 		$return = accessible_documents_proc_open($command);
 		if ($return['return_code'] === 0) {
-			$module_abstract_html .= '<pre>' . $return['stdout'] . '</pre>';
-		} else {
-			$module_abstract_html .= '<pre>' . print_r($return, true) . '</pre>';
-		}
+			$module_export_html .= '<pre>' . $return['stdout'] . '</pre>';
 
-			// @TODO DL du fichier MD généré + des autres formats
-			$extensions = ['md', 'html', 'csv', 'doccx', 'json', 'odt', 'rtf', 'xml'];
+			// @TODO Lien de DL du fichier MD généré + des autres formats
+			$extensions = ['md', 'html', 'csv', 'docx', 'json', 'odt', 'rtf', 'xml'];
 			foreach($extensions as $extension) {
 				// New paths
-				$outputFile_path = str_replace('_data/source/', '_data/output/' . $source_hash, $inputFile_path);
-				$outputFile_path = str_replace(['.pdf', '.PDF'], $extension, $outputFile_path);
+				$outputFile_path = str_replace('_data/source/', "_data/output/$source_hash/", $inputFile_path);
+				$outputFile_path = str_replace(['.pdf', '.PDF'], ".$extension", $outputFile_path);
 
 				$generated_file_name = basename($outputFile_path);
 				$encodedFileName = urlencode(base64_encode($generated_file_name));
 				
-				//$module_abstract_html .= 'Fichier ".' . $extension . '" généré&nbsp;: ';
-				$module_abstract_html .= '<a class="link-download" href="?serve_file=' . $encodedFileName . '" target="_blank">Télécharger le fichier ' . $generated_file_name . '.' . $extension . '</a>';
+				$module_export_html .= "<pre>DEBUG : hash = $source_hash<br>input path = $inputFile_path<br>output path = $outputFile_path<br>file name = $generated_file_name</pre>";
+				//$module_export_html .= 'Fichier ".' . $extension . '" généré&nbsp;: ';
+				$module_export_html .= '<a class="link-download" href="?serve_file=' . $encodedFileName . '" target="_blank">Télécharger le fichier ' . $generated_file_name . '</a>';
 			}
+			
+		} else {
+			$module_export_html .= '<pre>' . print_r($return, true) . '</pre>';
+		}
 	}
 
 
@@ -686,7 +690,7 @@ if ($action) {
 	}
 
 	if (!empty($module_struct_text_html)) {
-		$html .= '<h3>Résultat du module : Structuration et Exports multi-formats</h3>';
+		$html .= '<h3>' . "Résultat du module : Extraction de données structurées à partir d'un PDF Image et Exports multi-formats" . '</h3>';
 		$html .= $module_struct_text_html;
 	}
 
@@ -711,7 +715,7 @@ if ($action) {
 	}
 
 	if (!empty($module_export_html)) {	
-		$html .= '<h3>Résultat du module : Exports</h3>';
+		$html .= '<h3>Résultat du module : Extraction de données structurées et Exports multi-formats</h3>';
 		$html .= $module_export_html;
 	}
 }
@@ -719,7 +723,7 @@ if ($action) {
 
 $html .= '<br /><br /><br />';
 
-$html .= '</body></html>';
+$html .= '</main></body></html>';
 
 echo $html;
 

@@ -18,8 +18,12 @@ if [[ ! -f "$PDF_FILE_PATH" ]]; then
   exit 1
 fi
 
+
+
 echo "TRAITEMENT du fichier $PDF_FILE_PATH"
 
+echo ""
+echo "# ETAPE 1 : Extraction des données et analyse pour générer un fichier MarkDown :"
 
 # Vérification et Installation environnement (1 seule fois)
 # Chargement environnement python
@@ -36,11 +40,11 @@ fi
 echo ""
 #source "./env/bin/activate"
 
-echo "commande : python3 \"$SCRIPT_DIR/parser.py\" \"$PDF_FILE_PATH\" \"$HASH_ID\""
-python_return=$(python3 "$SCRIPT_DIR/parser.py" "$PDF_FILE_PATH" "../data/_output/$HASH_ID")
+echo "commande : python3 \"$SCRIPT_DIR/parser.py\" \"$PDF_FILE_PATH\" \"./_data/output/$HASH_ID\""
+python_return=$(python3 "$SCRIPT_DIR/parser.py" "$PDF_FILE_PATH" "./_data/output/$HASH_ID")
 echo "Retour de la commande python : "
 echo "$python_return"
-exit
+
 
 # Extraction du nom de base du fichier sans extension
 SOURCE_NAME=$(basename "$PDF_FILE_PATH")
@@ -55,15 +59,11 @@ echo " - Base path: $BASE_PATH"
 DATA_PATH=$(dirname "$BASE_PATH")
 echo " - Data path : $DATA_PATH"
 # Add "output/dir/" to the path
-OUTPUT_PATH="$OUTPUT_PATH/output/${HASH_ID:-$SOURCE_BASE_NAME}/"
+OUTPUT_PATH="$DATA_PATH/output/${HASH_ID:-$SOURCE_BASE_NAME}/"
 #OUTPUT_PATH="$DATA_PATH/output/"
 echo " - Output path : $OUTPUT_PATH"
 echo ""
 OUTPUT_BASE_NAME="${SOURCE_BASE_NAME}"
-
-MD_FILE_PATH="${OUTPUT_PATH}${SOURCE_NAME}.md"
-echo " - MD file path : $MD_FILE_PATH"
-
 
 # Check if the folder exists, if not, create it
 if [ ! -d "$OUTPUT_PATH" ]; then
@@ -74,44 +74,55 @@ else
   echo "Le dossier de sortie existe."
 fi
 
+MD_FILE_PATH="${OUTPUT_PATH}${SOURCE_NAME}.md"
+echo " - MD file path : $MD_FILE_PATH"
+
+
+echo ""
+echo "# ETAPE 2 : Conversion du fichier MD généré dans divers formats :"
+
 echo "Conversion de $MD_FILE_PATH dans plusieurs formats :"
 echo "Les fichiers générés seront dans : $OUTPUT_PATH"
 
 # 1. HTML
 pandoc "$MD_FILE_PATH" -o "${OUTPUT_PATH}${OUTPUT_BASE_NAME}.html"
-echo "HTML généré : ${OUTPUT_PATH}${OUTPUT_BASE_NAME}.html"
+echo " - HTML généré : ${OUTPUT_PATH}${OUTPUT_BASE_NAME}.html"
 
 # 2. JSON (représentation syntaxique Pandoc)
 pandoc "$MD_FILE_PATH" -t json -o "${OUTPUT_PATH}${OUTPUT_BASE_NAME}.json"
-echo "JSON généré : ${OUTPUT_PATH}${OUTPUT_BASE_NAME}.json"
+echo " - JSON généré : ${OUTPUT_PATH}${OUTPUT_BASE_NAME}.json"
 
 # 3. XML (utilisation du format JATS)
 pandoc "$MD_FILE_PATH" -t jats -o "${OUTPUT_PATH}${OUTPUT_BASE_NAME}.xml"
-echo "XML (JATS) généré : ${OUTPUT_PATH}${OUTPUT_BASE_NAME}.xml"
+echo " - XML (JATS) généré : ${OUTPUT_PATH}${OUTPUT_BASE_NAME}.xml"
 
 # 4. CSV (extraction simple des tableaux)
 csv_file="${OUTPUT_PATH}${OUTPUT_BASE_NAME}.csv"
 grep -A 1000 "^ *\\|" "$MD_FILE_PATH" | sed '/^ *$/q' > "$csv_file"
-echo "CSV généré (simple extraction des tableaux) : $csv_file"
+echo " - CSV généré (simple extraction des tableaux) : $csv_file"
 
 # 5. ODT (OpenDocument Text)
 pandoc "$MD_FILE_PATH" -o "${OUTPUT_PATH}${OUTPUT_BASE_NAME}.odt"
-echo "ODT généré : ${OUTPUT_PATH}${OUTPUT_BASE_NAME}.odt"
+echo " - ODT généré : ${OUTPUT_PATH}${OUTPUT_BASE_NAME}.odt"
 
 # 6. DOCX (Microsoft Word)
 pandoc "$MD_FILE_PATH" -o "${OUTPUT_PATH}${OUTPUT_BASE_NAME}.docx"
-echo "DOCX généré : ${OUTPUT_PATH}${OUTPUT_BASE_NAME}.docx"
+echo " - DOCX généré : ${OUTPUT_PATH}${OUTPUT_BASE_NAME}.docx"
 
 # 7. ODS (OpenDocument Spreadsheet) via LibreOffice
 libreoffice --headless --convert-to ods "${OUTPUT_PATH}${OUTPUT_BASE_NAME}.odt" --outdir "$OUTPUT_PATH"
-echo "ODS généré : ${OUTPUT_PATH}${OUTPUT_BASE_NAME}.ods"
+echo " - ODS généré : ${OUTPUT_PATH}${OUTPUT_BASE_NAME}.ods"
 
 # 8. XLSX (Microsoft Excel) via LibreOffice
 libreoffice --headless --convert-to xlsx "${OUTPUT_PATH}${OUTPUT_BASE_NAME}.odt" --outdir "$OUTPUT_PATH"
-echo "XLSX généré : ${OUTPUT_PATH}${OUTPUT_BASE_NAME}.xlsx"
+echo " - XLSX généré : ${OUTPUT_PATH}${OUTPUT_BASE_NAME}.xlsx"
 
 # 9. RTF (Rich Text Format)
 pandoc "$MD_FILE_PATH" -o "${OUTPUT_PATH}${OUTPUT_BASE_NAME}.rtf"
-echo "RTF généré : ${OUTPUT_PATH}${OUTPUT_BASE_NAME}.rtf"
+echo " - RTF généré : ${OUTPUT_PATH}${OUTPUT_BASE_NAME}.rtf"
+echo ""
 
+echo ">>> Résultats : "
+echo ""
 echo "Conversion terminée. Les fichiers sont dans : $OUTPUT_PATH"
+ls -alh "${OUTPUT_PATH}"
