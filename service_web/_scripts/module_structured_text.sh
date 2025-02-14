@@ -27,39 +27,6 @@ echo "TRAITEMENT du fichier $PDF_FILE_PATH"
 SCRIPT_DIR=$(dirname "$0")
 BASE_DIR=$(dirname "$SCRIPT_DIR")
 
-echo ""
-echo "# ETAPE 1 : Extraction des données et analyse pour générer un fichier MarkDown :"
-
-# Vérification et Installation environnement (1 seule fois)
-# Chargement environnement python
-echo "- script dir : $SCRIPT_DIR"
-cd "$SCRIPT_DIR"
-if [ -d "./env" ]; then
-  echo "Le dossier 'env' existe."
-else
-  echo "Le dossier 'env' n'existe pas : création."
-  python3 -m venv env
-fi
-echo ""
-#ls -alh
-#source /env/bin/activate
-
-#python3 "$PDF_FILE_PATH" "$HASH_ID"
-#/var/www/start.linagora.com/EnrichPDF/_scripts/service_web/_data/output/bash_struct_text
-#/var/www/start.linagora.com/EnrichPDF/_scripts/_data/output/bash_struct_text
-
-echo "BASE DIR : $BASE_DIR"
-echo "Output param : ${BASE_DIR}/_data/output/${HASH_ID}"
-
-echo "commande : python3 \"$SCRIPT_DIR/pyu4llm.py\" \"$PDF_FILE_PATH\" \"${BASE_DIR}/_data/output/${HASH_ID}\""
-python_return=$(python3 "$SCRIPT_DIR/pyu4llm.py" "$PDF_FILE_PATH" "${BASE_DIR}/_data/output/${HASH_ID}")
-echo "Retour de la commande python : "
-echo "$python_return"
-
-
-
-echo ""
-echo "# ETAPE 2 : Conversion du fichier MD généré dans divers formats :"
 
 # Extraction du nom de base du fichier sans extension
 SOURCE_NAME=$(basename "$PDF_FILE_PATH")
@@ -93,6 +60,43 @@ else
   echo "Le dossier de sortie existe."
 fi
 echo ""
+
+
+echo ""
+echo "# ETAPE 1 : Extraction des données et analyse pour générer un fichier MarkDown :"
+
+# Vérification et Installation environnement (1 seule fois)
+# Chargement environnement python
+echo "- script dir : $SCRIPT_DIR"
+cd "$SCRIPT_DIR"
+if [ -d "./env" ]; then
+  echo "Le dossier 'env' existe."
+else
+  echo "Le dossier 'env' n'existe pas : création."
+  python3 -m venv env
+fi
+echo ""
+#ls -alh
+#source /env/bin/activate
+
+#python3 "$PDF_FILE_PATH" "$HASH_ID"
+#/var/www/start.linagora.com/EnrichPDF/_scripts/service_web/_data/output/bash_struct_text
+#/var/www/start.linagora.com/EnrichPDF/_scripts/_data/output/bash_struct_text
+
+echo "BASE DIR : $BASE_DIR"
+echo "Output param : ${BASE_DIR}/_data/output/${HASH_ID}"
+
+# @TODO : la commande python devrait prendre uniquement des chemins absolus, 
+# de sorte à permettre de gérer les emplacements côté stack web de manière homogène
+echo "commande : python3 \"$SCRIPT_DIR/pyu4llm.py\" \"$PDF_FILE_PATH\" \"${BASE_DIR}/_data/output/${HASH_ID}\""
+python_return=$(python3 "$SCRIPT_DIR/pyu4llm.py" "$PDF_FILE_PATH" "${BASE_DIR}/_data/output/${HASH_ID}")
+echo "Retour de la commande python : "
+echo "$python_return"
+
+
+
+echo ""
+echo "# ETAPE 2 : Conversion du fichier MD généré dans divers formats :"
 
 echo "Conversion de $MD_FILE_PATH dans plusieurs formats :"
 echo "Les fichiers générés seront dans : $OUTPUT_PATH"

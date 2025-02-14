@@ -4,20 +4,59 @@
 
 
 # Variables
-## input file path
+## Source file path (can be relative or absolute, but python modules will use only absolute paths)
 PDF_FILE_PATH="$1"
+## SHA256 hash of file content - ie. hash is unique per file 
 HASH_ID="$2"
-#HASH_ID=$(sha1sum "$PDF_FILE_PATH" | awk '{print $1}')
 # LANGUAGE="${2:-fra}"  # Si aucune langue n'est fournie, utiliser 'fra' par défaut
 
 # Current folder : FOLDER_PATH=$(dirname "$file_path")
 
-# Vérification de l'entrée
+# Vérification du chemin source
 if [[ ! -f "$PDF_FILE_PATH" ]]; then
   echo "Erreur : Le fichier PDF spécifié n'existe pas : $PDF_FILE_PATH"
   exit 1
 fi
 
+# Vérification du hash
+#if [[ ! -f "$HASH_ID" ]]; then
+#  HASH_ID=$(sha1sum "$PDF_FILE_PATH" | awk '{print $1}')
+#  echo "Erreur : Dossier de sortie non précisé
+#  exit 1
+#fi
+
+
+# Extraction du nom de base du fichier sans extension
+SOURCE_NAME=$(basename "$PDF_FILE_PATH")
+SOURCE_BASE_NAME="${SOURCE_NAME%.md}"
+
+# Calcul du dossier de sortie en fonction du hash du fichier
+# si on veut calculer le chemin complet à partir d'un relatif : full_path=$(realpath "$relative_path")
+# Compute the base path
+BASE_PATH=$(dirname "$PDF_FILE_PATH")
+echo " - Base path: $BASE_PATH"
+# Get up 1 level
+DATA_PATH=$(dirname "$BASE_PATH")
+echo " - Data path : $DATA_PATH"
+# Add "output/dir/" to the path
+OUTPUT_PATH="$DATA_PATH/output/${HASH_ID:-$SOURCE_BASE_NAME}/"
+#OUTPUT_PATH="$DATA_PATH/output/"
+echo " - Output path : $OUTPUT_PATH"
+echo ""
+OUTPUT_BASE_NAME="${SOURCE_BASE_NAME}"
+#exit;
+
+# Check if the folder exists, if not, create it
+if [ ! -d "$OUTPUT_PATH" ]; then
+  echo "Dossier de sortie inexistant, création :"
+  mkdir -p "$OUTPUT_PATH"
+  chmod -R 775 "$OUTPUT_PATH"
+else
+  echo "Le dossier de sortie existe."
+fi
+
+MD_FILE_PATH="${OUTPUT_PATH}${SOURCE_NAME}.md"
+echo " - MD file path : $MD_FILE_PATH"
 
 
 echo "TRAITEMENT du fichier $PDF_FILE_PATH"
@@ -40,42 +79,14 @@ fi
 echo ""
 #source "./env/bin/activate"
 
+
+# @TODO : la commande python devrait prendre uniquement des chemins absolus, 
+# de sorte à permettre de gérer les emplacements côté stack web de manière homogène
 echo "commande : python3 \"$SCRIPT_DIR/parser.py\" \"$PDF_FILE_PATH\" \"./_data/output/$HASH_ID\""
 python_return=$(python3 "$SCRIPT_DIR/parser.py" "$PDF_FILE_PATH" "./_data/output/$HASH_ID")
 echo "Retour de la commande python : "
 echo "$python_return"
 
-
-# Extraction du nom de base du fichier sans extension
-SOURCE_NAME=$(basename "$PDF_FILE_PATH")
-SOURCE_BASE_NAME="${SOURCE_NAME%.md}"
-
-# Calcul du dossier de sortie en fonction du hash du fichier
-# si on veut calculer le chemin complet à partir d'un relatif : full_path=$(realpath "$relative_path")
-# Compute the base path
-BASE_PATH=$(dirname "$PDF_FILE_PATH")
-echo " - Base path: $BASE_PATH"
-# Get up 1 level
-DATA_PATH=$(dirname "$BASE_PATH")
-echo " - Data path : $DATA_PATH"
-# Add "output/dir/" to the path
-OUTPUT_PATH="$DATA_PATH/output/${HASH_ID:-$SOURCE_BASE_NAME}/"
-#OUTPUT_PATH="$DATA_PATH/output/"
-echo " - Output path : $OUTPUT_PATH"
-echo ""
-OUTPUT_BASE_NAME="${SOURCE_BASE_NAME}"
-
-# Check if the folder exists, if not, create it
-if [ ! -d "$OUTPUT_PATH" ]; then
-  echo "Dossier de sortie inexistant, création :"
-  mkdir -p "$OUTPUT_PATH"
-  chmod -R 775 "$OUTPUT_PATH"
-else
-  echo "Le dossier de sortie existe."
-fi
-
-MD_FILE_PATH="${OUTPUT_PATH}${SOURCE_NAME}.md"
-echo " - MD file path : $MD_FILE_PATH"
 
 
 echo ""
